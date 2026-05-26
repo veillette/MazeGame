@@ -1,0 +1,25 @@
+{
+  "title": "Jeu du Labyrinthe",
+  "screens": {
+    "mazeGame": "Labyrinthe"
+  },
+  "controlMode": {
+    "title": "Contrôle",
+    "position": "Position",
+    "velocity": "Vitesse",
+    "acceleration": "Accélération"
+  },
+  "levels": {
+    "title": "Niveau",
+    "practice": "Entraînement",
+    "level1": "Niveau 1",
+    "level2": "Niveau 2",
+    "certainDeath": "Mort Certaine"
+  },
+  "hud": {
+    "time": "Temps",
+    "collisions": "Collisions",
+    "won": "But!",
+    "resetLevel": "Réinitialiser"
+  }
+}

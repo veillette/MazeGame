@@ -1,0 +1,25 @@
+{
+  "title": "Maze Game",
+  "screens": {
+    "mazeGame": "Maze Game"
+  },
+  "controlMode": {
+    "title": "Control",
+    "position": "Position",
+    "velocity": "Velocity",
+    "acceleration": "Acceleration"
+  },
+  "levels": {
+    "title": "Level",
+    "practice": "Practice",
+    "level1": "Level 1",
+    "level2": "Level 2",
+    "certainDeath": "Certain Death"
+  },
+  "hud": {
+    "time": "Time",
+    "collisions": "Collisions",
+    "won": "Goal!",
+    "resetLevel": "Reset Level"
+  }
+}

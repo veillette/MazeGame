@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#1a1a2e"/>
+  <!-- Maze walls -->
+  <g fill="#bdbdbd">
+    <rect x="80"  y="80"  width="60" height="240"/>
+    <rect x="80"  y="80"  width="300" height="60"/>
+    <rect x="180" y="180" width="200" height="60"/>
+    <rect x="180" y="240" width="60"  height="160"/>
+    <rect x="180" y="340" width="252" height="60"/>
+    <rect x="372" y="180" width="60"  height="220"/>
+  </g>
+  <!-- Finish tile -->
+  <rect x="100" y="240" width="60" height="60" fill="#4caf50"/>
+  <!-- Particle -->
+  <circle cx="290" cy="120" r="22" fill="#e53935"/>
+</svg>
