@@ -24,13 +24,7 @@ import { ModelViewTransform2 } from "scenerystack/phetcommon";
 import { KeyboardListener } from "scenerystack/scenery";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
-import {
-  SoundClip,
-  collect_mp3,
-  selectionArpeggio001_mp3,
-  soundManager,
-  wallContact_mp3,
-} from "scenerystack/tambo";
+import { collect_mp3, SoundClip, selectionArpeggio001_mp3, soundManager, wallContact_mp3 } from "scenerystack/tambo";
 import type { Tandem } from "scenerystack/tandem";
 import { ControlMode } from "../model/ControlMode.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
@@ -144,8 +138,11 @@ export class MazeGameScreenView extends ScreenView {
         const mode = model.controlModeProperty.value;
 
         if (activeKeys.includes("space")) {
-          if (mode === ControlMode.VELOCITY) model.particle.setVelocityXY(0, 0);
-          else if (mode === ControlMode.ACCELERATION) model.particle.setAccelerationXY(0, 0);
+          if (mode === ControlMode.VELOCITY) {
+            model.particle.setVelocityXY(0, 0);
+          } else if (mode === ControlMode.ACCELERATION) {
+            model.particle.setAccelerationXY(0, 0);
+          }
           return;
         }
 
@@ -158,7 +155,9 @@ export class MazeGameScreenView extends ScreenView {
             dy += axis[1];
           }
         }
-        if (dx === 0 && dy === 0) return;
+        if (dx === 0 && dy === 0) {
+          return;
+        }
 
         if (mode === ControlMode.POSITION) {
           const step = MazeGameConstants.KEYBOARD_POSITION_STEP;
@@ -186,7 +185,9 @@ export class MazeGameScreenView extends ScreenView {
     const winSound = new SoundClip(collect_mp3, { initialOutputLevel: 0.7 });
     soundManager.addSoundGenerator(winSound);
     model.wonProperty.link((won) => {
-      if (won) winSound.play();
+      if (won) {
+        winSound.play();
+      }
     });
 
     const modeSound = new SoundClip(selectionArpeggio001_mp3, { initialOutputLevel: 0.3 });

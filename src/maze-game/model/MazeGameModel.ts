@@ -168,7 +168,10 @@ export class MazeGameModel implements TModel {
   public advanceLevel(): void {
     const idx = LEVEL_KEYS.indexOf(this.levelNameProperty.value);
     if (idx < LEVEL_KEYS.length - 1) {
-      this.levelNameProperty.value = LEVEL_KEYS[idx + 1]!;
+      const next = LEVEL_KEYS[idx + 1];
+      if (next !== undefined) {
+        this.levelNameProperty.value = next;
+      }
     }
   }
 
