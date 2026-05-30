@@ -20,6 +20,8 @@
     "time": "Temps",
     "collisions": "Collisions",
     "won": "But!",
-    "resetLevel": "Réinitialiser"
+    "resetLevel": "Réinitialiser",
+    "collisionWarning": "Collision ! Réinitialisez pour réessayer.",
+    "nextLevel": "Niveau suivant"
   }
 }

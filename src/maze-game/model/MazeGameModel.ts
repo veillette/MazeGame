@@ -10,7 +10,7 @@ import { BooleanProperty, DerivedProperty, NumberProperty, Property, type ReadOn
 import type { TModel } from "scenerystack/joist";
 import { ControlMode } from "./ControlMode.js";
 import type Level from "./Level.js";
-import { LEVELS, LevelKey } from "./Levels.js";
+import { LEVEL_KEYS, LEVELS, LevelKey } from "./Levels.js";
 import MazeGameConstants from "./MazeGameConstants.js";
 import Particle from "./Particle.js";
 import { TileType } from "./TileType.js";
@@ -69,6 +69,10 @@ export class MazeGameModel implements TModel {
     const particle = this.particle;
     const mode = this.controlModeProperty.value;
 
+    // Save pre-integration position for wall push-back bisection.
+    const oldX = particle.position.x;
+    const oldY = particle.position.y;
+
     // Integrate kinematics.
     if (mode === ControlMode.VELOCITY) {
       const v = particle.velocity;
@@ -94,6 +98,33 @@ export class MazeGameModel implements TModel {
       particle.position.y,
       particle.radius,
     );
+
+    // Wall push-back for physics-integrated modes: bisect back to the last
+    // non-colliding position so the particle never tunnels through a wall.
+    if (colliding && mode !== ControlMode.POSITION) {
+      const wasAlreadyColliding = level.collidesWithTileTypeAt(TileType.WALL, oldX, oldY, particle.radius);
+      if (!wasAlreadyColliding) {
+        let safeX = oldX;
+        let safeY = oldY;
+        let testX = particle.position.x;
+        let testY = particle.position.y;
+        for (let i = 0; i < 8; i++) {
+          const midX = (safeX + testX) / 2;
+          const midY = (safeY + testY) / 2;
+          if (level.collidesWithTileTypeAt(TileType.WALL, midX, midY, particle.radius)) {
+            testX = midX;
+            testY = midY;
+          } else {
+            safeX = midX;
+            safeY = midY;
+          }
+        }
+        particle.setPositionXY(safeX, safeY);
+      }
+      // Zero velocity so the particle doesn't bore into the wall next frame.
+      particle.setVelocityXY(0, 0);
+    }
+
     particle.collidingProperty.value = colliding;
     if (colliding && !this.previousColliding) {
       this.collisionsProperty.value += 1;
@@ -131,6 +162,19 @@ export class MazeGameModel implements TModel {
    */
   public resetLevel(): void {
     this.resetGameState();
+  }
+
+  /** Advance to the next level in sequence, if one exists. */
+  public advanceLevel(): void {
+    const idx = LEVEL_KEYS.indexOf(this.levelNameProperty.value);
+    if (idx < LEVEL_KEYS.length - 1) {
+      this.levelNameProperty.value = LEVEL_KEYS[idx + 1]!;
+    }
+  }
+
+  /** True when the player is on the last available level. */
+  public get isLastLevel(): boolean {
+    return LEVEL_KEYS.indexOf(this.levelNameProperty.value) === LEVEL_KEYS.length - 1;
   }
 
   private resetGameState(): void {

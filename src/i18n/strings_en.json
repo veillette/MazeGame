@@ -20,6 +20,8 @@
     "time": "Time",
     "collisions": "Collisions",
     "won": "Goal!",
-    "resetLevel": "Reset Level"
+    "resetLevel": "Reset Level",
+    "collisionWarning": "Collision! Reset to try again.",
+    "nextLevel": "Next Level"
   }
 }

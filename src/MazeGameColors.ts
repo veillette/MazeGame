@@ -50,6 +50,18 @@ const MazeGameColors = {
   // Panels.
   panelFillProperty: profileColor("panelFill", PANEL_FILL_DARK, PANEL_FILL_LIGHT),
   panelStrokeProperty: profileColor("panelStroke", PANEL_STROKE_DARK, PANEL_STROKE_LIGHT),
+
+  // Start tile marker (semi-transparent blue).
+  startTileColorProperty: profileColor("startTile", "rgba(100,160,255,0.5)", "rgba(50,100,200,0.35)"),
+
+  // Warning text when a collision locks the player out of winning.
+  collisionWarningColorProperty: profileColor("collisionWarning", "#ff7043", "#b71c1c"),
+
+  // Reset Level button — same hue across themes.
+  resetLevelButtonColorProperty: profileColor("resetLevelButton", "#f6e652", "#f6e652"),
+
+  // Next Level button.
+  nextLevelButtonColorProperty: profileColor("nextLevelButton", "#66bb6a", "#388e3c"),
 };
 
 MazeGameNamespace.register("MazeGameColors", MazeGameColors);

@@ -4,15 +4,19 @@
  * Top-level view. Lays out:
  *   - The maze arena (left).
  *   - The right column: control-mode panel, level selector, HUD (which now
- *     includes the Reset Level button).
+ *     includes the Reset Level and Next Level buttons).
  *   - A ResetAllButton bottom-right.
  *
  * Keyboard input is wired through SceneryStack's KeyboardListener (global
  * scope) so it integrates with the focus / hotkey system instead of bypassing
- * it via window.addEventListener. Each recognized key translates to a model
- * action based on the active ControlMode.
+ * it via window.addEventListener. Key combinations are split so that holding
+ * two direction keys produces a diagonal velocity or acceleration.
  *
- * Forwards step(dt) to ArenaNode so the win-celebration ring animates.
+ * Forwards step(dt) to ArenaNode so the win-celebration ring and collision
+ * flicker animations advance in sync.
+ *
+ * Sound effects are wired here by linking to model properties and playing
+ * built-in tambo SoundClips.
  */
 
 import { Bounds2, Vector2 } from "scenerystack/dot";
@@ -20,6 +24,13 @@ import { ModelViewTransform2 } from "scenerystack/phetcommon";
 import { KeyboardListener } from "scenerystack/scenery";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
+import {
+  SoundClip,
+  collect_mp3,
+  selectionArpeggio001_mp3,
+  soundManager,
+  wallContact_mp3,
+} from "scenerystack/tambo";
 import type { Tandem } from "scenerystack/tandem";
 import { ControlMode } from "../model/ControlMode.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
@@ -32,21 +43,15 @@ import LevelSelector from "./LevelSelector.js";
 type MazeGameScreenViewOptions = ScreenViewOptions & { tandem: Tandem };
 
 const MARGIN = 14;
-
-// Width (px) reserved on the right side for the panel column.
 const RIGHT_COLUMN_WIDTH = 240;
-
-// Vertical gap between right-column panels.
 const RIGHT_COLUMN_GAP = 10;
 
-// Keys this view responds to. Movement keys → an [x, y] unit vector applied
-// to the active kinematic Property; "space" zeroes velocity / acceleration.
-// Typed as OneKeyStroke[] (any single-key stroke string is valid).
 const KEYS = ["arrowLeft", "arrowRight", "arrowUp", "arrowDown", "a", "d", "w", "s", "space"] as ReadonlyArray<
   "arrowLeft" | "arrowRight" | "arrowUp" | "arrowDown" | "a" | "d" | "w" | "s" | "space"
 >;
 
-function axisForKey(key: string): readonly [number, number] | "zero" | null {
+// Returns the [dx, dy] unit contribution for a single key, or null if unrecognised.
+function axisForKey(key: string): readonly [number, number] | null {
   switch (key) {
     case "arrowLeft":
     case "a":
@@ -56,13 +61,10 @@ function axisForKey(key: string): readonly [number, number] | "zero" | null {
       return [1, 0];
     case "arrowUp":
     case "w":
-      // Screen +Y is down, so "up" decreases y.
       return [0, -1];
     case "arrowDown":
     case "s":
       return [0, 1];
-    case "space":
-      return "zero";
     default:
       return null;
   }
@@ -131,26 +133,33 @@ export class MazeGameScreenView extends ScreenView {
     this.children = [this.arenaNode, controlPanel, levelSelector, hudNode, resetAllButton];
 
     // ── Keyboard input ──────────────────────────────────────────────────────
-    // Registered globally so the user can press keys regardless of where focus
-    // is in the document; SceneryStack routes through its hotkey/focus system.
+    // Split the keysPressed combination string (e.g. "arrowLeft+arrowUp") so
+    // that holding two direction keys contributes both components.  This
+    // enables diagonal movement in velocity and acceleration modes.
     KeyboardListener.createGlobal(this, {
       keys: [...KEYS],
       fireOnHold: true,
       fire: (_event, keysPressed) => {
-        const axis = axisForKey(keysPressed);
-        if (axis === null) {
-          return;
-        }
+        const activeKeys = String(keysPressed).split("+");
         const mode = model.controlModeProperty.value;
-        if (axis === "zero") {
-          if (mode === ControlMode.VELOCITY) {
-            model.particle.setVelocityXY(0, 0);
-          } else if (mode === ControlMode.ACCELERATION) {
-            model.particle.setAccelerationXY(0, 0);
-          }
+
+        if (activeKeys.includes("space")) {
+          if (mode === ControlMode.VELOCITY) model.particle.setVelocityXY(0, 0);
+          else if (mode === ControlMode.ACCELERATION) model.particle.setAccelerationXY(0, 0);
           return;
         }
-        const [dx, dy] = axis;
+
+        let dx = 0;
+        let dy = 0;
+        for (const key of activeKeys) {
+          const axis = axisForKey(key);
+          if (axis) {
+            dx += axis[0];
+            dy += axis[1];
+          }
+        }
+        if (dx === 0 && dy === 0) return;
+
         if (mode === ControlMode.POSITION) {
           const step = MazeGameConstants.KEYBOARD_POSITION_STEP;
           const p = model.particle.position;
@@ -164,6 +173,25 @@ export class MazeGameScreenView extends ScreenView {
         }
       },
     });
+
+    // ── Sound effects ────────────────────────────────────────────────────────
+    const collisionSound = new SoundClip(wallContact_mp3, { initialOutputLevel: 0.5 });
+    soundManager.addSoundGenerator(collisionSound);
+    model.collisionsProperty.link((count, oldCount) => {
+      if (oldCount !== null && count > oldCount) {
+        collisionSound.play();
+      }
+    });
+
+    const winSound = new SoundClip(collect_mp3, { initialOutputLevel: 0.7 });
+    soundManager.addSoundGenerator(winSound);
+    model.wonProperty.link((won) => {
+      if (won) winSound.play();
+    });
+
+    const modeSound = new SoundClip(selectionArpeggio001_mp3, { initialOutputLevel: 0.3 });
+    soundManager.addSoundGenerator(modeSound);
+    model.controlModeProperty.lazyLink(() => modeSound.play());
   }
 
   public override step(dt: number): void {
