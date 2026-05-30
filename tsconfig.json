@@ -23,5 +23,5 @@
     "erasableSyntaxOnly": true,
     "types": ["vite/client", "vite-plugin-pwa/client"]
   },
-  "include": ["src", "scripts"]
+  "include": ["src"]
 }

@@ -13,7 +13,7 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "fix": "biome check --write .",
-    "check": "tsc --noEmit",
+    "check": "tsc --noEmit && tsc -p tsconfig.scripts.json --noEmit",
     "icons": "tsx scripts/generate-icons.ts",
     "clean": "rm -rf dist"
   },
@@ -21,7 +21,7 @@
     "scenerystack": "^3.0.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
+    "@biomejs/biome": "^2.4.16",
     "@types/node": "^22.10.0",
     "png-to-ico": "^3.0.1",
     "sharp": "^0.34.5",
