@@ -82,8 +82,12 @@ export default class ArenaNode extends Node {
         MazeGameColors.finishWonColorProperty,
       ],
       (collisions, won, normal, closed, victory) => {
-        if (won) return victory;
-        if (collisions > 0) return closed;
+        if (won) {
+          return victory;
+        }
+        if (collisions > 0) {
+          return closed;
+        }
         return normal;
       },
     );
@@ -115,7 +119,9 @@ export default class ArenaNode extends Node {
       const tileSize = this.tileSizeView;
       for (let r = 0; r < level.data.length; r++) {
         const row = level.data[r];
-        if (!row) continue;
+        if (!row) {
+          continue;
+        }
         for (let c = 0; c < row.length; c++) {
           if (row[c] === TileType.WALL) {
             const x = modelViewTransform.modelToViewX(level.colToX(c));
@@ -151,7 +157,9 @@ export default class ArenaNode extends Node {
     model.wonProperty.link((won) => {
       this.winRing.visible = won;
       this.goalText.visible = won;
-      if (won) this.pulseTime = 0;
+      if (won) {
+        this.pulseTime = 0;
+      }
     });
 
     // Particle.
@@ -177,7 +185,9 @@ export default class ArenaNode extends Node {
     this.particleNode.addInputListener(
       new DragListener({
         drag: (event) => {
-          if (model.controlModeProperty.value !== ControlMode.POSITION) return;
+          if (model.controlModeProperty.value !== ControlMode.POSITION) {
+            return;
+          }
           const local = modelViewTransform.viewToModelPosition(
             this.particleNode.globalToParentPoint(event.pointer.point),
           );
@@ -265,7 +275,9 @@ export default class ArenaNode extends Node {
     }
 
     // ── Win-pulse ring ─────────────────────────────────────────────────────
-    if (!this.modelRef.wonProperty.value) return;
+    if (!this.modelRef.wonProperty.value) {
+      return;
+    }
     const duration = MazeGameConstants.WIN_PULSE_DURATION;
     this.pulseTime = (this.pulseTime + dt) % duration;
     const t = this.pulseTime / duration;
