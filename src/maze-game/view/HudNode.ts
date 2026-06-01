@@ -23,11 +23,35 @@ const WARNING_FONT = new PhetFont({ size: 12, weight: "bold" });
 const HBOX_SPACING = 6;
 const VBOX_SPACING = 6;
 
+type HudNodeOptions = {
+  interruptInput?: () => void;
+};
+
 export default class HudNode extends Panel {
-  public constructor(model: MazeGameModel) {
+  private readonly timeDisplayRef: NumberDisplay;
+  private readonly collisionsDisplayRef: NumberDisplay;
+  private readonly derivedProperties: Array<{ dispose(): void }> = [];
+
+  private readonly collisionWarningRef!: Text;
+  private readonly nextLevelButtonRef!: TextPushButton;
+
+  private readonly updateCollisionWarningVisible = (v: boolean): void => {
+    this.collisionWarningRef.visible = v;
+  };
+
+  private readonly updateNextLevelVisible = (v: boolean): void => {
+    this.nextLevelButtonRef.visible = v;
+  };
+
+  public constructor(model: MazeGameModel, options: HudNodeOptions = {}) {
     const stringManager = StringManager.getInstance();
     const strings = stringManager.getHudStrings();
     const a11yStrings = stringManager.getA11yStrings();
+    const interruptInput =
+      options.interruptInput ??
+      ((): void => {
+        // No-op when HudNode is constructed without a ScreenView interrupt callback.
+      });
 
     const timeDisplay = new NumberDisplay(model.timeProperty, new Range(0, 999), {
       decimalPlaces: 1,
@@ -59,7 +83,6 @@ export default class HudNode extends Panel {
       ],
     });
 
-    // Warning shown once a collision has occurred, until the level is reset.
     const collisionWarning = new Text(strings.collisionWarningStringProperty, {
       font: WARNING_FONT,
       fill: MazeGameColors.collisionWarningColorProperty,
@@ -67,35 +90,26 @@ export default class HudNode extends Panel {
       visible: false,
     });
     collisionWarning.accessibleParagraph = strings.collisionWarningStringProperty;
-    const collisionWarningVisibleProperty = new DerivedProperty(
-      [model.collisionsProperty, model.wonProperty],
-      (c, won) => c > 0 && !won,
-    );
-    collisionWarningVisibleProperty.link((v) => {
-      collisionWarning.visible = v;
-    });
 
     const resetLevelButton = new TextPushButton(strings.resetLevelStringProperty, {
       font: BUTTON_FONT,
       baseColor: MazeGameColors.resetLevelButtonColorProperty,
-      listener: () => model.resetLevel(),
+      listener: () => {
+        interruptInput();
+        model.resetLevel();
+      },
       accessibleName: strings.resetLevelStringProperty,
     });
 
-    // "Next Level" — only shown when the player has won and isn't on the last level.
     const nextLevelButton = new TextPushButton(strings.nextLevelStringProperty, {
       font: BUTTON_FONT,
       baseColor: MazeGameColors.nextLevelButtonColorProperty,
-      listener: () => model.advanceLevel(),
+      listener: () => {
+        interruptInput();
+        model.advanceLevel();
+      },
       visible: false,
       accessibleName: strings.nextLevelStringProperty,
-    });
-    const nextLevelVisibleProperty = new DerivedProperty(
-      [model.wonProperty, model.levelNameProperty],
-      (won) => won && !model.isLastLevel,
-    );
-    nextLevelVisibleProperty.link((v) => {
-      nextLevelButton.visible = v;
     });
 
     const content = new VBox({
@@ -107,11 +121,39 @@ export default class HudNode extends Panel {
     super(content, {
       fill: MazeGameColors.panelFillProperty,
       stroke: MazeGameColors.panelStrokeProperty,
-      cornerRadius: 6,
-      xMargin: 12,
-      yMargin: 8,
+      cornerRadius: MazeGameConstants.PANEL_CORNER_RADIUS,
+      xMargin: MazeGameConstants.PANEL_X_MARGIN,
+      yMargin: MazeGameConstants.HUD_PANEL_Y_MARGIN,
       align: "left",
-      accessibleName: strings.timeStringProperty,
+      accessibleName: a11yStrings.hudPanelStringProperty,
     });
+
+    this.timeDisplayRef = timeDisplay;
+    this.collisionsDisplayRef = collisionsDisplay;
+    this.collisionWarningRef = collisionWarning;
+    this.nextLevelButtonRef = nextLevelButton;
+
+    const collisionWarningVisibleProperty = new DerivedProperty(
+      [model.collisionsProperty, model.wonProperty],
+      (c, won) => c > 0 && !won,
+    );
+    this.derivedProperties.push(collisionWarningVisibleProperty);
+    collisionWarningVisibleProperty.link(this.updateCollisionWarningVisible, { disposer: this });
+
+    const nextLevelVisibleProperty = new DerivedProperty(
+      [model.wonProperty, model.isLastLevelProperty],
+      (won, isLastLevel) => won && !isLastLevel,
+    );
+    this.derivedProperties.push(nextLevelVisibleProperty);
+    nextLevelVisibleProperty.link(this.updateNextLevelVisible, { disposer: this });
+  }
+
+  public override dispose(): void {
+    for (const derivedProperty of this.derivedProperties) {
+      derivedProperty.dispose();
+    }
+    this.timeDisplayRef.dispose();
+    this.collisionsDisplayRef.dispose();
+    super.dispose();
   }
 }

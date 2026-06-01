@@ -29,6 +29,8 @@
     "controlPad": "Control pad. Drag the knob to set position, velocity, or acceleration.",
     "particle": "Particle. Drag to move when Position control mode is selected.",
     "timeDisplay": "Elapsed time, seconds",
-    "collisionsDisplay": "Number of wall collisions"
+    "collisionsDisplay": "Number of wall collisions",
+    "hudPanel": "Game status and level controls",
+    "levelComplete": "Goal reached with zero collisions"
   }
 }

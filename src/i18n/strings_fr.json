@@ -29,6 +29,8 @@
     "controlPad": "Panneau de contrôle. Faites glisser le bouton pour régler la position, la vitesse ou l'accélération.",
     "particle": "Particule. Faites glisser pour déplacer en mode Position.",
     "timeDisplay": "Temps écoulé, en secondes",
-    "collisionsDisplay": "Nombre de collisions avec un mur"
+    "collisionsDisplay": "Nombre de collisions avec un mur",
+    "hudPanel": "État de la partie et contrôles du niveau",
+    "levelComplete": "But atteint sans collision"
   }
 }

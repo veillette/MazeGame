@@ -60,7 +60,6 @@ function isAxisKey(key: string): key is AxisKey {
   return key in AXIS_BY_KEY;
 }
 
-// Returns the [dx, dy] unit contribution for a single key, or null if unrecognised.
 function axisForKey(key: string): readonly [number, number] | null {
   if (!isAxisKey(key)) {
     return null;
@@ -70,13 +69,34 @@ function axisForKey(key: string): readonly [number, number] | null {
 
 export class MazeGameScreenView extends ScreenView {
   private readonly arenaNode: ArenaNode;
+  private readonly controlPanel: ControlPanel;
+  private readonly hudNode: HudNode;
+  private readonly keyboardListener: ReturnType<typeof KeyboardListener.createGlobal>;
+  private readonly collisionSound: SoundClip;
+  private readonly winSound: SoundClip;
+  private readonly modeSound: SoundClip;
+
+  private readonly playCollisionSound = (count: number, oldCount: number | null): void => {
+    if (oldCount !== null && count > oldCount) {
+      this.collisionSound.play();
+    }
+  };
+
+  private readonly playWinSound = (won: boolean): void => {
+    if (won) {
+      this.winSound.play();
+    }
+  };
+
+  private readonly playModeSound = (): void => {
+    this.modeSound.play();
+  };
 
   public constructor(model: MazeGameModel, providedOptions: MazeGameScreenViewOptions) {
     super(providedOptions);
 
     const layoutBounds = this.layoutBounds;
 
-    // ── Arena layout ────────────────────────────────────────────────────────
     const arenaLeft = MARGIN;
     const arenaTop = MARGIN;
     const arenaRight = layoutBounds.maxX - RIGHT_COLUMN_WIDTH - 2 * MARGIN;
@@ -84,8 +104,8 @@ export class MazeGameScreenView extends ScreenView {
     const arenaWidth = arenaRight - arenaLeft;
     const arenaHeight = arenaBottom - arenaTop;
 
-    const modelLevelWidth = MazeGameConstants.LEVEL_WIDTH * MazeGameConstants.TILE_SIZE;
-    const modelLevelHeight = MazeGameConstants.LEVEL_HEIGHT * MazeGameConstants.TILE_SIZE;
+    const modelLevelWidth = MazeGameConstants.LEVEL_MODEL_WIDTH;
+    const modelLevelHeight = MazeGameConstants.LEVEL_MODEL_HEIGHT;
     const scale = Math.min(arenaWidth / modelLevelWidth, arenaHeight / modelLevelHeight);
 
     const arenaCenterX = arenaLeft + arenaWidth / 2;
@@ -103,20 +123,21 @@ export class MazeGameScreenView extends ScreenView {
     const arenaViewMaxY = modelViewTransform.modelToViewY(modelLevelHeight / 2);
     const arenaBounds = new Bounds2(arenaViewMinX, arenaViewMinY, arenaViewMaxX, arenaViewMaxY);
 
-    // ── Children ────────────────────────────────────────────────────────────
     this.arenaNode = new ArenaNode(model, modelViewTransform, arenaBounds);
 
-    const controlPanel = new ControlPanel(model);
-    controlPanel.right = layoutBounds.maxX - MARGIN;
-    controlPanel.top = MARGIN;
+    this.controlPanel = new ControlPanel(model);
+    this.controlPanel.right = layoutBounds.maxX - MARGIN;
+    this.controlPanel.top = MARGIN;
 
     const levelSelector = new LevelSelector(model);
     levelSelector.right = layoutBounds.maxX - MARGIN;
-    levelSelector.top = controlPanel.bottom + RIGHT_COLUMN_GAP;
+    levelSelector.top = this.controlPanel.bottom + RIGHT_COLUMN_GAP;
 
-    const hudNode = new HudNode(model);
-    hudNode.right = layoutBounds.maxX - MARGIN;
-    hudNode.top = levelSelector.bottom + RIGHT_COLUMN_GAP;
+    this.hudNode = new HudNode(model, {
+      interruptInput: () => this.interruptSubtreeInput(),
+    });
+    this.hudNode.right = layoutBounds.maxX - MARGIN;
+    this.hudNode.top = levelSelector.bottom + RIGHT_COLUMN_GAP;
 
     const resetAllButton = new ResetAllButton({
       listener: () => {
@@ -129,16 +150,19 @@ export class MazeGameScreenView extends ScreenView {
       tandem: providedOptions.tandem.createTandem("resetAllButton"),
     });
 
-    this.children = [this.arenaNode, controlPanel, levelSelector, hudNode, resetAllButton];
+    this.children = [this.arenaNode, this.controlPanel, levelSelector, this.hudNode, resetAllButton];
 
-    // ── Keyboard input ──────────────────────────────────────────────────────
-    // Split the keysPressed combination string (e.g. "arrowLeft+arrowUp") so
-    // that holding two direction keys contributes both components.  This
-    // enables diagonal movement in velocity and acceleration modes.
-    KeyboardListener.createGlobal(this, {
+    this.pdomPlayAreaNode.pdomOrder = [this.arenaNode];
+    this.pdomControlAreaNode.pdomOrder = [this.controlPanel, levelSelector, this.hudNode, resetAllButton];
+
+    this.keyboardListener = KeyboardListener.createGlobal(this, {
       keys: [...KEYS],
       fireOnHold: true,
       fire: (_event, keysPressed) => {
+        if (model.wonProperty.value) {
+          return;
+        }
+
         const activeKeys = keysPressed.split("+");
         const mode = model.controlModeProperty.value;
 
@@ -178,29 +202,37 @@ export class MazeGameScreenView extends ScreenView {
       },
     });
 
-    // ── Sound effects ────────────────────────────────────────────────────────
-    const collisionSound = new SoundClip(wallContact_mp3, { initialOutputLevel: 0.5 });
-    soundManager.addSoundGenerator(collisionSound);
-    model.collisionsProperty.link((count, oldCount) => {
-      if (oldCount !== null && count > oldCount) {
-        collisionSound.play();
-      }
-    });
+    this.collisionSound = new SoundClip(wallContact_mp3, { initialOutputLevel: 0.5 });
+    soundManager.addSoundGenerator(this.collisionSound);
+    model.collisionsProperty.link(this.playCollisionSound, { disposer: this });
 
-    const winSound = new SoundClip(collect_mp3, { initialOutputLevel: 0.7 });
-    soundManager.addSoundGenerator(winSound);
-    model.wonProperty.link((won) => {
-      if (won) {
-        winSound.play();
-      }
-    });
+    this.winSound = new SoundClip(collect_mp3, { initialOutputLevel: 0.7 });
+    soundManager.addSoundGenerator(this.winSound);
+    model.wonProperty.link(this.playWinSound, { disposer: this });
 
-    const modeSound = new SoundClip(selectionArpeggio001_mp3, { initialOutputLevel: 0.3 });
-    soundManager.addSoundGenerator(modeSound);
-    model.controlModeProperty.lazyLink(() => modeSound.play());
+    this.modeSound = new SoundClip(selectionArpeggio001_mp3, { initialOutputLevel: 0.3 });
+    soundManager.addSoundGenerator(this.modeSound);
+    model.controlModeProperty.lazyLink(this.playModeSound, { disposer: this });
   }
 
   public override step(dt: number): void {
     this.arenaNode.step(dt);
+  }
+
+  public override dispose(): void {
+    soundManager.removeSoundGenerator(this.collisionSound);
+    soundManager.removeSoundGenerator(this.winSound);
+    soundManager.removeSoundGenerator(this.modeSound);
+    this.collisionSound.dispose();
+    this.winSound.dispose();
+    this.modeSound.dispose();
+
+    this.keyboardListener.dispose();
+
+    this.hudNode.dispose();
+    this.controlPanel.dispose();
+    this.arenaNode.dispose();
+
+    super.dispose();
   }
 }

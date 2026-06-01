@@ -11,6 +11,7 @@
 import { DerivedProperty, Multilink } from "scenerystack/axon";
 import type { Bounds2 } from "scenerystack/dot";
 import { Vector2 } from "scenerystack/dot";
+import { Shape } from "scenerystack/kite";
 import type { ModelViewTransform2 } from "scenerystack/phetcommon";
 import { Circle, DragListener, Node, Rectangle, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
@@ -46,9 +47,81 @@ export default class ArenaNode extends Node {
   private readonly tileSizeView: number;
   private readonly modelRef: MazeGameModel;
 
+  private readonly particleDragListener: DragListener;
+  private readonly vectorMultilink: ReturnType<typeof Multilink.multilink>;
+  private readonly derivedProperties: Array<{ dispose(): void }> = [];
+
+  private readonly rebuildLevel = (level: Level): void => {
+    const { wallsLayer, startTile, finishTile, modelViewTransform } = this.levelLayoutRefs;
+    wallsLayer.removeAllChildren();
+    const tileSize = this.tileSizeView;
+    for (let r = 0; r < level.data.length; r++) {
+      const row = level.data[r];
+      if (!row) {
+        continue;
+      }
+      for (let c = 0; c < row.length; c++) {
+        if (row[c] === TileType.WALL) {
+          const x = modelViewTransform.modelToViewX(level.colToX(c));
+          const y = modelViewTransform.modelToViewY(level.rowToY(r));
+          wallsLayer.addChild(
+            new Rectangle(x, y, tileSize, tileSize, {
+              fill: MazeGameColors.wallColorProperty,
+              stroke: MazeGameColors.wallShadowColorProperty,
+              lineWidth: 1,
+            }),
+          );
+        }
+      }
+    }
+
+    const startGrid = level.startPosition();
+    const startX = modelViewTransform.modelToViewX(level.colToX(startGrid.col));
+    const startY = modelViewTransform.modelToViewY(level.rowToY(startGrid.row));
+    startTile.setRect(startX, startY, tileSize, tileSize);
+
+    const finishGrid = level.finishPosition();
+    const finishX = modelViewTransform.modelToViewX(level.colToX(finishGrid.col));
+    const finishY = modelViewTransform.modelToViewY(level.rowToY(finishGrid.row));
+    finishTile.setRect(finishX, finishY, tileSize, tileSize);
+
+    this.finishCenter = new Vector2(finishX + tileSize / 2, finishY + tileSize / 2);
+    this.winRing.center = this.finishCenter;
+    this.goalText.centerX = this.finishCenter.x;
+    this.goalText.bottom = finishY - MazeGameConstants.GOAL_LABEL_GAP_VIEW;
+  };
+
+  private readonly updateWinCelebration = (won: boolean): void => {
+    this.winRing.visible = won;
+    this.goalText.visible = won;
+    if (won) {
+      this.pulseTime = 0;
+    }
+  };
+
+  private readonly syncParticlePosition = (position: Vector2): void => {
+    this.particleNode.translation = this.levelLayoutRefs.modelViewTransform.modelToViewPosition(position);
+  };
+
+  private readonly updateDragEnabled = (enabled: boolean): void => {
+    this.particleNode.cursor = enabled ? "pointer" : "default";
+    this.particleNode.pickable = enabled;
+  };
+
+  // Stored so rebuildLevel can access layout nodes created in the constructor.
+  private readonly levelLayoutRefs: {
+    wallsLayer: Node;
+    startTile: Rectangle;
+    finishTile: Rectangle;
+    modelViewTransform: ModelViewTransform2;
+  };
+
   public constructor(model: MazeGameModel, modelViewTransform: ModelViewTransform2, viewBounds: Bounds2) {
     super();
     this.modelRef = model;
+
+    const stringManager = StringManager.getInstance();
+    const a11yStrings = stringManager.getA11yStrings();
 
     // Floor (covers the full arena view region).
     const floor = new Rectangle(viewBounds, {
@@ -72,6 +145,8 @@ export default class ArenaNode extends Node {
     });
     this.addChild(finishTile);
 
+    this.levelLayoutRefs = { wallsLayer, startTile, finishTile, modelViewTransform };
+
     // Color logic: green by default, red-orange while collisions > 0, yellow on win.
     const finishFillProperty = new DerivedProperty(
       [
@@ -92,6 +167,7 @@ export default class ArenaNode extends Node {
       },
     );
     finishTile.fill = finishFillProperty;
+    this.derivedProperties.push(finishFillProperty);
 
     this.tileSizeView = modelViewTransform.modelToViewDeltaX(MazeGameConstants.TILE_SIZE);
 
@@ -104,98 +180,52 @@ export default class ArenaNode extends Node {
     this.addChild(this.winRing);
 
     // "Goal!" text overlay — visible only when wonProperty is true.
-    this.goalText = new Text(StringManager.getInstance().getHudStrings().wonStringProperty, {
+    this.goalText = new Text(stringManager.getHudStrings().wonStringProperty, {
       font: new PhetFont({ size: GOAL_FONT_SIZE, weight: "bold" }),
       fill: MazeGameColors.finishWonColorProperty,
       stroke: MazeGameColors.wallShadowColorProperty,
       lineWidth: 1,
       visible: false,
+      accessibleParagraph: a11yStrings.levelCompleteStringProperty,
     });
     this.addChild(this.goalText);
 
-    // Rebuild walls + reposition start/finish whenever level changes.
-    model.levelProperty.link((level: Level) => {
-      wallsLayer.removeAllChildren();
-      const tileSize = this.tileSizeView;
-      for (let r = 0; r < level.data.length; r++) {
-        const row = level.data[r];
-        if (!row) {
-          continue;
-        }
-        for (let c = 0; c < row.length; c++) {
-          if (row[c] === TileType.WALL) {
-            const x = modelViewTransform.modelToViewX(level.colToX(c));
-            const y = modelViewTransform.modelToViewY(level.rowToY(r));
-            wallsLayer.addChild(
-              new Rectangle(x, y, tileSize, tileSize, {
-                fill: MazeGameColors.wallColorProperty,
-                stroke: MazeGameColors.wallShadowColorProperty,
-                lineWidth: 1,
-              }),
-            );
-          }
-        }
-      }
-
-      const startGrid = level.startPosition();
-      const startX = modelViewTransform.modelToViewX(level.colToX(startGrid.col));
-      const startY = modelViewTransform.modelToViewY(level.rowToY(startGrid.row));
-      startTile.setRect(startX, startY, tileSize, tileSize);
-
-      const finishGrid = level.finishPosition();
-      const finishX = modelViewTransform.modelToViewX(level.colToX(finishGrid.col));
-      const finishY = modelViewTransform.modelToViewY(level.rowToY(finishGrid.row));
-      finishTile.setRect(finishX, finishY, tileSize, tileSize);
-
-      this.finishCenter = new Vector2(finishX + tileSize / 2, finishY + tileSize / 2);
-      this.winRing.center = this.finishCenter;
-      this.goalText.centerX = this.finishCenter.x;
-      this.goalText.bottom = finishY - MazeGameConstants.GOAL_LABEL_GAP_VIEW;
-    });
-
-    // Toggle celebration visibility and reset its animation phase on win.
-    model.wonProperty.link((won) => {
-      this.winRing.visible = won;
-      this.goalText.visible = won;
-      if (won) {
-        this.pulseTime = 0;
-      }
-    });
+    model.levelProperty.link(this.rebuildLevel, { disposer: this });
+    model.wonProperty.link(this.updateWinCelebration, { disposer: this });
 
     // Particle.
     const particleRadiusView = modelViewTransform.modelToViewDeltaX(model.particle.radius);
+    const touchRadius = Math.max(particleRadiusView, MazeGameConstants.PARTICLE_MIN_TOUCH_RADIUS_VIEW);
     this.particleNode = new Circle(particleRadiusView, {
       fill: MazeGameColors.particleColorProperty,
     });
-    this.particleNode.accessibleName = StringManager.getInstance().getA11yStrings().particleStringProperty;
+    this.particleNode.mouseArea = Shape.circle(0, 0, particleRadiusView);
+    this.particleNode.touchArea = Shape.circle(0, 0, touchRadius);
+    this.particleNode.accessibleName = a11yStrings.particleStringProperty;
     this.addChild(this.particleNode);
 
-    model.particle.positionProperty.link((position) => {
-      this.particleNode.translation = modelViewTransform.modelToViewPosition(position);
-    });
+    model.particle.positionProperty.link(this.syncParticlePosition, { disposer: this });
 
     // Direct drag of the particle — gated to POSITION mode via cursor/pickable.
     const dragEnabledProperty = new DerivedProperty(
-      [model.controlModeProperty],
-      (mode) => mode === ControlMode.POSITION,
+      [model.controlModeProperty, model.wonProperty],
+      (mode, won) => mode === ControlMode.POSITION && !won,
     );
-    dragEnabledProperty.link((enabled) => {
-      this.particleNode.cursor = enabled ? "pointer" : "default";
-      this.particleNode.pickable = enabled;
+    this.derivedProperties.push(dragEnabledProperty);
+    dragEnabledProperty.link(this.updateDragEnabled, { disposer: this });
+
+    this.particleDragListener = new DragListener({
+      drag: (event) => {
+        if (model.wonProperty.value || model.controlModeProperty.value !== ControlMode.POSITION) {
+          return;
+        }
+        const local = modelViewTransform.viewToModelPosition(
+          this.particleNode.globalToParentPoint(event.pointer.point),
+        );
+        model.particle.setPositionXY(local.x, local.y);
+      },
     });
-    this.particleNode.addInputListener(
-      new DragListener({
-        drag: (event) => {
-          if (model.controlModeProperty.value !== ControlMode.POSITION) {
-            return;
-          }
-          const local = modelViewTransform.viewToModelPosition(
-            this.particleNode.globalToParentPoint(event.pointer.point),
-          );
-          model.particle.setPositionXY(local.x, local.y);
-        },
-      }),
-    );
+    this.particleNode.addInputListener(this.particleDragListener);
 
     // ── Velocity / acceleration vector arrows ────────────────────────────────
     const velocityArrowScale = (this.tileSizeView * ARROW_TILE_LENGTHS) / MazeGameConstants.VELOCITY_SCALE;
@@ -221,7 +251,7 @@ export default class ArenaNode extends Node {
     });
     this.addChild(this.accelerationArrow);
 
-    Multilink.multilink(
+    this.vectorMultilink = Multilink.multilink(
       [
         model.particle.positionProperty,
         model.particle.velocityProperty,
@@ -257,6 +287,16 @@ export default class ArenaNode extends Node {
         }
       },
     );
+  }
+
+  public override dispose(): void {
+    for (const derivedProperty of this.derivedProperties) {
+      derivedProperty.dispose();
+    }
+    this.vectorMultilink.dispose();
+    this.particleNode.removeInputListener(this.particleDragListener);
+    this.particleDragListener.dispose();
+    super.dispose();
   }
 
   /**

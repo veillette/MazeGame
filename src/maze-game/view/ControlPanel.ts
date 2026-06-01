@@ -2,7 +2,7 @@
  * ControlPanel.ts
  *
  * A control panel with three tabs (Position / Velocity / Acceleration) and a
- * square drag-pad. Dragging the knob inside the pad updates whichever
+ * square drag-pad. Dragging anywhere inside the pad updates whichever
  * kinematic Property the active mode targets, and the arrow visualizes the
  * current state of that Property when the user isn't dragging.
  *
@@ -37,9 +37,6 @@ const KNOB_RADIUS = 9;
 
 const TAB_SPACING = 4;
 const PAD_CORNER_RADIUS = 4;
-const PANEL_CORNER_RADIUS = 6;
-const PANEL_X_MARGIN = 12;
-const PANEL_Y_MARGIN = 10;
 const VBOX_SPACING = 8;
 
 const COLOR_BY_MODE: Record<ControlMode, ProfileColorProperty> = {
@@ -49,6 +46,18 @@ const COLOR_BY_MODE: Record<ControlMode, ProfileColorProperty> = {
 };
 
 export default class ControlPanel extends Panel {
+  private readonly padLayerRef: Node;
+  private readonly padDragListener: DragListener;
+  private readonly reflectMultilink: ReturnType<typeof Multilink.multilink>;
+  private readonly arrowRef: ArrowNode;
+  private readonly knobRef: Circle;
+
+  private readonly recolorForMode = (mode: ControlMode): void => {
+    const color = COLOR_BY_MODE[mode];
+    this.arrowRef.fill = color;
+    this.knobRef.fill = color;
+  };
+
   public constructor(model: MazeGameModel) {
     const stringManager = StringManager.getInstance();
     const strings = stringManager.getControlModeStrings();
@@ -103,6 +112,7 @@ export default class ControlPanel extends Panel {
     const padLayer = new Node({
       clipArea: Shape.bounds(new Bounds2(-HALF, -HALF, HALF, HALF)),
       children: [arrow, knob],
+      cursor: "pointer",
     });
     const pad = new Node({ children: [padBackground, padLayer] });
     pad.accessibleName = a11yStrings.controlPadStringProperty;
@@ -111,11 +121,15 @@ export default class ControlPanel extends Panel {
     super(content, {
       fill: MazeGameColors.panelFillProperty,
       stroke: MazeGameColors.panelStrokeProperty,
-      cornerRadius: PANEL_CORNER_RADIUS,
-      xMargin: PANEL_X_MARGIN,
-      yMargin: PANEL_Y_MARGIN,
+      cornerRadius: MazeGameConstants.PANEL_CORNER_RADIUS,
+      xMargin: MazeGameConstants.PANEL_X_MARGIN,
+      yMargin: MazeGameConstants.PANEL_Y_MARGIN,
       accessibleName: strings.titleStringProperty,
     });
+
+    this.padLayerRef = padLayer;
+    this.arrowRef = arrow;
+    this.knobRef = knob;
 
     let isDragging = false;
 
@@ -124,16 +138,14 @@ export default class ControlPanel extends Panel {
       knob.center = tip;
     };
 
-    const LEVEL_W = MazeGameConstants.LEVEL_WIDTH * MazeGameConstants.TILE_SIZE;
-    const LEVEL_H = MazeGameConstants.LEVEL_HEIGHT * MazeGameConstants.TILE_SIZE;
+    const LEVEL_W = MazeGameConstants.LEVEL_MODEL_WIDTH;
+    const LEVEL_H = MazeGameConstants.LEVEL_MODEL_HEIGHT;
 
-    // pad-coordinate tip ↔ model-units (active mode determines the mapping).
     const tipFromModel = (): Vector2 => {
       const mode = model.controlModeProperty.value;
       const particle = model.particle;
       let tip: Vector2;
       if (mode === ControlMode.POSITION) {
-        // Map model x ∈ [-W/2, W/2] → pad x ∈ [-HALF, HALF]; same for y.
         tip = new Vector2((particle.position.x / (LEVEL_W / 2)) * HALF, (particle.position.y / (LEVEL_H / 2)) * HALF);
       } else if (mode === ControlMode.VELOCITY) {
         tip = new Vector2(
@@ -150,6 +162,9 @@ export default class ControlPanel extends Panel {
     };
 
     const applyTipToModel = (tip: Vector2): void => {
+      if (model.wonProperty.value) {
+        return;
+      }
       const mode = model.controlModeProperty.value;
       const particle = model.particle;
       if (mode === ControlMode.POSITION) {
@@ -174,33 +189,31 @@ export default class ControlPanel extends Panel {
       setTip(tipFromModel());
     };
 
-    knob.addInputListener(
-      new DragListener({
-        start: () => {
-          isDragging = true;
-        },
-        drag: (event) => {
-          const local = padLayer.globalToLocalPoint(event.pointer.point);
-          const tip = new Vector2(clamp(local.x, -HALF, HALF), clamp(local.y, -HALF, HALF));
-          setTip(tip);
-          applyTipToModel(tip);
-        },
-        end: () => {
-          isDragging = false;
-        },
-      }),
-    );
-
-    // Recolor arrow + knob per active mode.
-    model.controlModeProperty.link((mode) => {
-      const color = COLOR_BY_MODE[mode];
-      arrow.fill = color;
-      knob.fill = color;
+    this.padDragListener = new DragListener({
+      start: () => {
+        if (model.wonProperty.value) {
+          return;
+        }
+        isDragging = true;
+      },
+      drag: (event) => {
+        if (model.wonProperty.value) {
+          return;
+        }
+        const local = padLayer.globalToLocalPoint(event.pointer.point);
+        const tip = new Vector2(clamp(local.x, -HALF, HALF), clamp(local.y, -HALF, HALF));
+        setTip(tip);
+        applyTipToModel(tip);
+      },
+      end: () => {
+        isDragging = false;
+      },
     });
+    padLayer.addInputListener(this.padDragListener);
 
-    // Keep the arrow in sync with the underlying Properties whenever they
-    // change externally (keyboard input, mode-switch zeroing, reset, etc.).
-    Multilink.multilink(
+    model.controlModeProperty.link(this.recolorForMode, { disposer: this });
+
+    this.reflectMultilink = Multilink.multilink(
       [
         model.particle.positionProperty,
         model.particle.velocityProperty,
@@ -209,5 +222,12 @@ export default class ControlPanel extends Panel {
       ],
       reflect,
     );
+  }
+
+  public override dispose(): void {
+    this.reflectMultilink.dispose();
+    this.padLayerRef.removeInputListener(this.padDragListener);
+    this.padDragListener.dispose();
+    super.dispose();
   }
 }

@@ -11,6 +11,7 @@ import { AquaRadioButtonGroup, Panel } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
 import { LEVEL_KEYS, LevelKey } from "../model/Levels.js";
+import MazeGameConstants from "../model/MazeGameConstants.js";
 import type { MazeGameModel } from "../model/MazeGameModel.js";
 
 const TITLE_FONT = new PhetFont({ size: 14, weight: "bold" });
@@ -56,9 +57,9 @@ export default class LevelSelector extends Panel {
     super(content, {
       fill: MazeGameColors.panelFillProperty,
       stroke: MazeGameColors.panelStrokeProperty,
-      cornerRadius: 6,
-      xMargin: 12,
-      yMargin: 10,
+      cornerRadius: MazeGameConstants.PANEL_CORNER_RADIUS,
+      xMargin: MazeGameConstants.PANEL_X_MARGIN,
+      yMargin: MazeGameConstants.PANEL_Y_MARGIN,
       align: "left",
       accessibleName: strings.titleStringProperty,
     });

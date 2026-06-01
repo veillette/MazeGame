@@ -4,17 +4,25 @@
  * Physics and layout constants for the Maze Game model.
  */
 
+const TILE_SIZE = 1;
+const LEVEL_WIDTH = 32;
+const LEVEL_HEIGHT = 14;
+
 const MazeGameConstants = {
   // Tile size in model (meters). The level grid is 32 wide × 14 tall, so the
   // playable area spans 32 m × 14 m centered at the model origin.
-  TILE_SIZE: 1,
+  TILE_SIZE,
 
   // Player particle radius in model meters. 0.375 m matches the pixi original.
   PARTICLE_RADIUS: 0.375,
 
   // Grid dimensions (must match every level's ASCII grid).
-  LEVEL_WIDTH: 32,
-  LEVEL_HEIGHT: 14,
+  LEVEL_WIDTH,
+  LEVEL_HEIGHT,
+
+  // Playable model area (meters), derived from grid dimensions × tile size.
+  LEVEL_MODEL_WIDTH: LEVEL_WIDTH * TILE_SIZE,
+  LEVEL_MODEL_HEIGHT: LEVEL_HEIGHT * TILE_SIZE,
 
   // Drag-pad → model scaling for non-position modes (matches the pixi original).
   // The pad's half-extent maps to ±VELOCITY_SCALE m/s when in Velocity mode and
@@ -48,7 +56,7 @@ const MazeGameConstants = {
   // is backgrounded and dt explodes.
   MAX_CATCHUP_STEPS: 5,
 
-  // Seconds for one win-pulse cycle (scale 0.5 → 1.6, alpha 1 → 0).
+  // Seconds for one win-pulse cycle (scale 0.6 → 1.8, alpha 1 → 0).
   WIN_PULSE_DURATION: 1.4,
 
   // Stroke width (px) of the win-pulse ring.
@@ -59,6 +67,15 @@ const MazeGameConstants = {
 
   // Max width (px) for HUD warning text so long locales do not overlap the arena.
   HUD_WARNING_MAX_WIDTH: 220,
+
+  // Minimum particle pointer target radius in view coordinates (44 px touch target).
+  PARTICLE_MIN_TOUCH_RADIUS_VIEW: 22,
+
+  // Shared Panel chrome for right-column UI (ControlPanel, LevelSelector, HudNode).
+  PANEL_CORNER_RADIUS: 6,
+  PANEL_X_MARGIN: 12,
+  PANEL_Y_MARGIN: 10,
+  HUD_PANEL_Y_MARGIN: 8,
 } as const;
 
 export default MazeGameConstants;

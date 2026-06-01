@@ -20,6 +20,7 @@ export class MazeGameModel implements TModel {
 
   public readonly levelNameProperty = new Property<LevelKey>(LevelKey.PRACTICE);
   public readonly levelProperty: ReadOnlyProperty<Level>;
+  public readonly isLastLevelProperty: ReadOnlyProperty<boolean>;
   public readonly controlModeProperty = new Property<ControlMode>(ControlMode.POSITION);
   public readonly timeProperty = new NumberProperty(0);
   public readonly collisionsProperty = new NumberProperty(0);
@@ -32,25 +33,42 @@ export class MazeGameModel implements TModel {
   // Fixed-timestep accumulator (seconds of unconsumed wall-clock time).
   private timeAccumulator = 0;
 
+  private readonly resetOnLevelChange = (): void => {
+    this.resetGameState();
+  };
+
+  private readonly resetKinematicsOnModeChange = (mode: ControlMode): void => {
+    if (mode === ControlMode.POSITION) {
+      this.particle.setVelocityXY(0, 0);
+      this.particle.setAccelerationXY(0, 0);
+    } else if (mode === ControlMode.VELOCITY) {
+      this.particle.setAccelerationXY(0, 0);
+    }
+  };
+
   public constructor() {
     this.levelProperty = new DerivedProperty([this.levelNameProperty], (name) => LEVELS[name]);
+    this.isLastLevelProperty = new DerivedProperty(
+      [this.levelNameProperty],
+      (name) => LEVEL_KEYS.indexOf(name) === LEVEL_KEYS.length - 1,
+    );
 
     // Reset particle position & game state when the level changes.
-    this.levelNameProperty.lazyLink(() => this.resetGameState());
+    this.levelNameProperty.lazyLink(this.resetOnLevelChange);
 
     // Reset the dormant kinematic vectors whenever the control mode changes
     // (mirrors the original UX: switching modes zeroes the unused vectors).
-    this.controlModeProperty.lazyLink((mode) => {
-      if (mode === ControlMode.POSITION) {
-        this.particle.setVelocityXY(0, 0);
-        this.particle.setAccelerationXY(0, 0);
-      } else if (mode === ControlMode.VELOCITY) {
-        this.particle.setAccelerationXY(0, 0);
-      }
-    });
+    this.controlModeProperty.lazyLink(this.resetKinematicsOnModeChange);
 
     // Place the particle at the start tile of the initial level.
     this.placeParticleAtStart();
+  }
+
+  public dispose(): void {
+    this.levelNameProperty.unlink(this.resetOnLevelChange);
+    this.controlModeProperty.unlink(this.resetKinematicsOnModeChange);
+    this.isLastLevelProperty.dispose();
+    this.levelProperty.dispose();
   }
 
   public step(dt: number): void {
@@ -171,17 +189,12 @@ export class MazeGameModel implements TModel {
   /** Advance to the next level in sequence, if one exists. */
   public advanceLevel(): void {
     const idx = LEVEL_KEYS.indexOf(this.levelNameProperty.value);
-    if (idx < LEVEL_KEYS.length - 1) {
+    if (idx >= 0 && idx < LEVEL_KEYS.length - 1) {
       const next = LEVEL_KEYS[idx + 1];
       if (next !== undefined) {
         this.levelNameProperty.value = next;
       }
     }
-  }
-
-  /** True when the player is on the last available level. */
-  public get isLastLevel(): boolean {
-    return LEVEL_KEYS.indexOf(this.levelNameProperty.value) === LEVEL_KEYS.length - 1;
   }
 
   private resetGameState(): void {
