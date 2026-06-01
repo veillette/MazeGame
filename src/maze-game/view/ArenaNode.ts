@@ -1,9 +1,9 @@
 /**
  * ArenaNode.ts
  *
- * Renders the maze: floor, start tile, wall rectangles (with shadow stroke),
- * finish tile (color reflects collision/win state), a win-celebration ring +
- * "Goal!" overlay, velocity/acceleration vector arrows, and the particle.
+ * Renders the maze: floor, start tile, textured brick walls, finish tile with
+ * sheen and goal marker overlay (color reflects collision/win state), a
+ * win-celebration ring + "Goal!" label, vector arrows, and a glossy particle.
  *
  * step(dt) advances the collision-flicker animation and the win-pulse ring.
  */
@@ -13,7 +13,7 @@ import type { Bounds2 } from "scenerystack/dot";
 import { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import type { ModelViewTransform2 } from "scenerystack/phetcommon";
-import { Circle, DragListener, Node, Path, Rectangle, Text } from "scenerystack/scenery";
+import { Circle, DragListener, LinearGradient, Node, Path, Rectangle, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
@@ -24,13 +24,23 @@ import type Level from "../model/Level.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
 import type { MazeGameModel } from "../model/MazeGameModel.js";
 import { TileType } from "../model/TileType.js";
+import {
+  createGoalOverlayNode,
+  createParticleGlowFill,
+  createParticleRadialFill,
+  createParticleVisual,
+  createWallFill,
+  type ParticleVisualNodes,
+} from "./ArenaPaints.js";
 
 export default class ArenaNode extends Node {
   private readonly floorRect: Rectangle;
   private readonly winRing: Circle;
   private readonly goalText: Text;
   private readonly tracePath: Path;
-  private readonly particleNode: Circle;
+  private readonly particleVisual: ParticleVisualNodes;
+  private readonly finishSheen: Rectangle;
+  private readonly finishOverlay: Node;
   private readonly velocityArrow: ArrowNode;
   private readonly accelerationArrow: ArrowNode;
   private traceModelPoints: Vector2[] = [];
@@ -44,13 +54,15 @@ export default class ArenaNode extends Node {
 
   private readonly particleDragListener: DragListener;
   private readonly vectorMultilink: ReturnType<typeof Multilink.multilink>;
+  private readonly wallColorMultilink: ReturnType<typeof Multilink.multilink>;
   private readonly derivedProperties: Array<{ dispose(): void }> = [];
 
   private readonly rebuildLevel = (level: Level): void => {
-    const { wallsLayer, startTile, finishTile } = this.levelLayoutRefs;
+    const { wallsLayer, startTile, finishTile, finishSheen, finishOverlay } = this.levelLayoutRefs;
     const modelViewTransform = this.levelLayoutRefs.modelViewTransform;
     wallsLayer.removeAllChildren();
     const tileSize = this.tileSizeView;
+    const wallFill = createWallFill(tileSize, MazeGameColors.wallColorProperty, MazeGameColors.wallShadowColorProperty);
     for (let r = 0; r < level.data.length; r++) {
       const row = level.data[r];
       if (!row) {
@@ -62,9 +74,10 @@ export default class ArenaNode extends Node {
           const y = modelViewTransform.modelToViewY(level.rowToY(r));
           wallsLayer.addChild(
             new Rectangle(x, y, tileSize, tileSize, {
-              fill: MazeGameColors.wallColorProperty,
+              fill: wallFill,
               stroke: MazeGameColors.wallShadowColorProperty,
               lineWidth: MazeGameLayoutConstants.ARENA_WALL_LINE_WIDTH,
+              cornerRadius: MazeGameLayoutConstants.ARENA_WALL_CORNER_RADIUS,
             }),
           );
         }
@@ -80,6 +93,14 @@ export default class ArenaNode extends Node {
     const finishX = modelViewTransform.modelToViewX(level.colToX(finishGrid.col));
     const finishY = modelViewTransform.modelToViewY(level.rowToY(finishGrid.row));
     finishTile.setRect(finishX, finishY, tileSize, tileSize);
+    finishSheen.setRect(finishX, finishY, tileSize, tileSize);
+    finishSheen.fill = new LinearGradient(0, 0, tileSize, tileSize)
+      .addColorStop(0, MazeGameColors.goalTileSheenColorProperty)
+      .addColorStop(0.55, "rgba(0,0,0,0)")
+      .addColorStop(1, MazeGameColors.goalTileSheenColorProperty);
+    finishOverlay.translation = new Vector2(finishX, finishY);
+    finishOverlay.removeAllChildren();
+    finishOverlay.addChild(createGoalOverlayNode(tileSize));
 
     this.finishCenter = new Vector2(finishX + tileSize / 2, finishY + tileSize / 2);
     this.winRing.setRadius(tileSize * MazeGameLayoutConstants.ARENA_WIN_RING_RADIUS_FACTOR);
@@ -89,21 +110,28 @@ export default class ArenaNode extends Node {
   };
 
   private readonly syncParticlePosition = (position: Vector2): void => {
-    this.particleNode.translation = this.levelLayoutRefs.modelViewTransform.modelToViewPosition(position);
+    this.particleVisual.root.translation = this.levelLayoutRefs.modelViewTransform.modelToViewPosition(position);
   };
 
   private readonly updateParticlePointerTarget = (): void => {
     const modelViewTransform = this.levelLayoutRefs.modelViewTransform;
     const particleRadiusView = modelViewTransform.modelToViewDeltaX(this.modelRef.particle.radius);
     const touchRadius = Math.max(particleRadiusView, MazeGameConstants.PARTICLE_MIN_TOUCH_RADIUS_VIEW);
-    this.particleNode.setRadius(particleRadiusView);
-    this.particleNode.mouseArea = Shape.circle(0, 0, particleRadiusView);
-    this.particleNode.touchArea = Shape.circle(0, 0, touchRadius);
+    this.particleVisual.body.setRadius(particleRadiusView);
+    this.particleVisual.body.fill = createParticleRadialFill(particleRadiusView);
+    this.particleVisual.body.lineWidth = Math.max(1, particleRadiusView * 0.08);
+    this.particleVisual.glow.setRadius(particleRadiusView * 1.35);
+    this.particleVisual.glow.fill = createParticleGlowFill(particleRadiusView);
+    this.particleVisual.specular.setRadius(particleRadiusView * 0.22);
+    this.particleVisual.specular.centerX = -particleRadiusView * 0.28;
+    this.particleVisual.specular.centerY = -particleRadiusView * 0.32;
+    this.particleVisual.body.mouseArea = Shape.circle(0, 0, particleRadiusView);
+    this.particleVisual.body.touchArea = Shape.circle(0, 0, touchRadius);
     this.syncParticlePosition(this.modelRef.particle.position);
   };
 
   private readonly updateDragCursor = (enabled: boolean): void => {
-    this.particleNode.cursor = enabled ? "pointer" : "default";
+    this.particleVisual.body.cursor = enabled ? "pointer" : "default";
   };
 
   private readonly clearTrace = (): void => {
@@ -157,18 +185,13 @@ export default class ArenaNode extends Node {
   };
 
   private readonly recordTracePosition = (position: Vector2): void => {
-    if (particleTraceEnabledProperty.value) {
+    if (particleTraceEnabledProperty.value && !this.modelRef.wonProperty.value) {
       this.appendTracePoint(position);
     }
   };
 
-  private readonly clearTraceOnTimerReset = (time: number, oldTime: number | null): void => {
-    if (time === 0 && oldTime !== null && oldTime > 0) {
-      this.clearTrace();
-      if (particleTraceEnabledProperty.value) {
-        this.appendTracePoint(this.modelRef.particle.position);
-      }
-    }
+  private readonly resetTraceAfterGame = (): void => {
+    this.clearTrace();
   };
 
   // Stored so rebuildLevel can access layout nodes created in the constructor.
@@ -176,6 +199,8 @@ export default class ArenaNode extends Node {
     wallsLayer: Node;
     startTile: Rectangle;
     finishTile: Rectangle;
+    finishSheen: Rectangle;
+    finishOverlay: Node;
     modelViewTransform: ModelViewTransform2;
   };
 
@@ -201,10 +226,28 @@ export default class ArenaNode extends Node {
 
     const finishTile = new Rectangle(0, 0, 0, 0, {
       fill: MazeGameColors.finishColorProperty,
+      cornerRadius: MazeGameLayoutConstants.ARENA_GOAL_CORNER_RADIUS,
     });
     this.addChild(finishTile);
 
-    this.levelLayoutRefs = { wallsLayer, startTile, finishTile, modelViewTransform };
+    this.finishSheen = new Rectangle(0, 0, 0, 0, {
+      fill: "rgba(255,255,255,0)",
+      cornerRadius: MazeGameLayoutConstants.ARENA_GOAL_CORNER_RADIUS,
+      pickable: false,
+    });
+    this.addChild(this.finishSheen);
+
+    this.finishOverlay = new Node({ pickable: false });
+    this.addChild(this.finishOverlay);
+
+    this.levelLayoutRefs = {
+      wallsLayer,
+      startTile,
+      finishTile,
+      finishSheen: this.finishSheen,
+      finishOverlay: this.finishOverlay,
+      modelViewTransform,
+    };
 
     const finishFillProperty = new DerivedProperty(
       [
@@ -253,6 +296,7 @@ export default class ArenaNode extends Node {
       (won): void => {
         if (won) {
           this.pulseTime = 0;
+          this.clearTrace();
         }
       },
       { disposer: this },
@@ -267,23 +311,21 @@ export default class ArenaNode extends Node {
     });
     this.addChild(this.tracePath);
 
-    this.particleNode = new Circle(0, {
-      fill: MazeGameColors.particleColorProperty,
-    });
-    this.particleNode.accessibleName = a11yStrings.particleStringProperty;
-    this.addChild(this.particleNode);
+    this.particleVisual = createParticleVisual(1);
+    this.particleVisual.root.accessibleName = a11yStrings.particleStringProperty;
+    this.addChild(this.particleVisual.root);
 
     particleTraceEnabledProperty.link(this.syncTracePreference, { disposer: this });
     model.particle.positionProperty.link(this.syncParticlePosition, { disposer: this });
     model.particle.positionProperty.link(this.recordTracePosition, { disposer: this });
-    model.timeProperty.link(this.clearTraceOnTimerReset, { disposer: this });
+    model.gameGenerationProperty.lazyLink(this.resetTraceAfterGame, { disposer: this });
 
     const dragEnabledProperty = new DerivedProperty(
       [model.controlModeProperty, model.wonProperty],
       (mode, won): boolean => mode === ControlMode.POSITION && !won,
     );
     this.derivedProperties.push(dragEnabledProperty);
-    this.particleNode.pickableProperty = dragEnabledProperty;
+    this.particleVisual.body.pickableProperty = dragEnabledProperty;
     dragEnabledProperty.link(this.updateDragCursor, { disposer: this });
 
     this.particleDragListener = new DragListener({
@@ -292,12 +334,12 @@ export default class ArenaNode extends Node {
           return;
         }
         const local = this.levelLayoutRefs.modelViewTransform.viewToModelPosition(
-          this.particleNode.globalToParentPoint(event.pointer.point),
+          this.particleVisual.body.globalToParentPoint(event.pointer.point),
         );
         model.particle.setPositionXY(local.x, local.y);
       },
     });
-    this.particleNode.addInputListener(this.particleDragListener);
+    this.particleVisual.body.addInputListener(this.particleDragListener);
 
     this.velocityArrow = new ArrowNode(0, 0, 1, 0, {
       headWidth: MazeGameLayoutConstants.ARENA_ARROW_HEAD_WIDTH,
@@ -358,6 +400,12 @@ export default class ArenaNode extends Node {
     );
 
     model.levelProperty.link(this.rebuildLevel, { disposer: this });
+    this.wallColorMultilink = Multilink.multilink(
+      [MazeGameColors.wallColorProperty, MazeGameColors.wallShadowColorProperty],
+      (): void => {
+        this.rebuildLevel(model.levelProperty.value);
+      },
+    );
     this.setLayout(modelViewTransform, viewBounds);
   }
 
@@ -384,7 +432,8 @@ export default class ArenaNode extends Node {
       derivedProperty.dispose();
     }
     this.vectorMultilink.dispose();
-    this.particleNode.removeInputListener(this.particleDragListener);
+    this.wallColorMultilink.dispose();
+    this.particleVisual.body.removeInputListener(this.particleDragListener);
     this.particleDragListener.dispose();
     super.dispose();
   }
@@ -398,10 +447,10 @@ export default class ArenaNode extends Node {
       this.flickerTime += dt;
       const period = MazeGameConstants.FLICKER_PERIOD_SECONDS;
       const flickerOn = Math.floor(this.flickerTime / period) % 2 === 0;
-      this.particleNode.opacity = flickerOn ? MazeGameConstants.PARTICLE_COLLIDING_OPACITY : 1;
+      this.particleVisual.root.opacity = flickerOn ? MazeGameConstants.PARTICLE_COLLIDING_OPACITY : 1;
     } else {
       this.flickerTime = 0;
-      this.particleNode.opacity = 1;
+      this.particleVisual.root.opacity = 1;
     }
 
     if (!this.modelRef.wonProperty.value) {

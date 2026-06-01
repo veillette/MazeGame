@@ -38,7 +38,18 @@ const MazeGameColors = {
 
   // The player particle.
   particleColorProperty: profileColor("particle", "#e53935", "#b71c1c"),
+  particleHighlightColorProperty: profileColor("particleHighlight", "#ff8a80", "#ef5350"),
+  particleShadeColorProperty: profileColor("particleShade", "#c62828", "#7f0000"),
+  particleStrokeColorProperty: profileColor("particleStroke", "#5d1010", "#4a0000"),
+  particleSpecularColorProperty: profileColor("particleSpecular", "rgba(255,255,255,0.75)", "rgba(255,255,255,0.85)"),
+  particleGlowColorProperty: profileColor("particleGlow", "rgba(229,57,53,0.35)", "rgba(183,28,28,0.3)"),
   particleTraceColorProperty: profileColor("particleTrace", "rgba(229,57,53,0.55)", "rgba(183,28,28,0.5)"),
+
+  // Goal tile overlay (rings, star, stripes).
+  goalMarkerColorProperty: profileColor("goalMarker", "rgba(255,255,255,0.85)", "rgba(255,255,255,0.9)"),
+  goalStarFillColorProperty: profileColor("goalStarFill", "rgba(255,235,120,0.9)", "rgba(255,248,180,0.95)"),
+  goalStripeColorProperty: profileColor("goalStripe", "rgba(255,255,255,0.22)", "rgba(255,255,255,0.35)"),
+  goalTileSheenColorProperty: profileColor("goalTileSheen", "rgba(255,255,255,0.28)", "rgba(255,255,255,0.4)"),
 
   // Control-pad colors. Same hue across themes (matches the original sim).
   positionVectorProperty: profileColor("positionVector", "#2575BA", "#2575BA"),

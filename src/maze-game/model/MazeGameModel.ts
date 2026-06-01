@@ -24,6 +24,7 @@ export class MazeGameModel implements TModel {
   private readonly timePropertyImpl = new NumberProperty(0);
   private readonly collisionsPropertyImpl = new NumberProperty(0);
   private readonly wonPropertyImpl = new BooleanProperty(false);
+  private readonly gameGenerationPropertyImpl = new NumberProperty(0);
 
   public readonly levelProperty: ReadOnlyProperty<Level>;
   public readonly isLastLevelProperty: ReadOnlyProperty<boolean>;
@@ -46,6 +47,11 @@ export class MazeGameModel implements TModel {
 
   public get wonProperty(): ReadOnlyProperty<boolean> {
     return this.wonPropertyImpl;
+  }
+
+  /** Increments whenever per-level game state is reset (retry, level change, reset all). */
+  public get gameGenerationProperty(): ReadOnlyProperty<number> {
+    return this.gameGenerationPropertyImpl;
   }
 
   // Track previous colliding state so we only increment the counter on
@@ -96,6 +102,7 @@ export class MazeGameModel implements TModel {
     this.timePropertyImpl.dispose();
     this.collisionsPropertyImpl.dispose();
     this.wonPropertyImpl.dispose();
+    this.gameGenerationPropertyImpl.dispose();
     this.particle.dispose();
   }
 
@@ -266,6 +273,7 @@ export class MazeGameModel implements TModel {
     this.timeAccumulator = 0;
     this.particle.reset();
     this.placeParticleAtStart();
+    this.gameGenerationPropertyImpl.value += 1;
   }
 
   private placeParticleAtStart(): void {
