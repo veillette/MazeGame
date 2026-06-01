@@ -58,6 +58,10 @@ export class MazeGameModel implements TModel {
   // false → true transitions (i.e. each fresh contact counts as one collision).
   private previousColliding = false;
 
+  // Start-tile center cached at level load so hasStartedMoving() avoids a
+  // full grid scan on every physics substep.
+  private cachedStartCenter: { x: number; y: number } = { x: 0, y: 0 };
+
   // Fixed-timestep accumulator (seconds of unconsumed wall-clock time).
   private timeAccumulator = 0;
 
@@ -152,8 +156,9 @@ export class MazeGameModel implements TModel {
 
     // Wall push-back for physics-integrated modes: bisect back to the last
     // non-colliding position so the particle never tunnels through a wall.
+    let collidingAfterIntegration = false;
     if (mode !== ControlMode.POSITION) {
-      const collidingAfterIntegration = level.collidesWithTileTypeAt(
+      collidingAfterIntegration = level.collidesWithTileTypeAt(
         TileType.WALL,
         particle.position.x,
         particle.position.y,
@@ -181,7 +186,14 @@ export class MazeGameModel implements TModel {
       }
     }
 
-    const colliding = level.collidesWithTileTypeAt(TileType.WALL, particle.position.x, particle.position.y, radius);
+    // In physics modes use the pre-push-back result: push-back always leaves
+    // the particle at a non-overlapping position, but the collision contact
+    // happened and must be counted. In POSITION mode re-check the final
+    // position because the user may have dragged the particle into a wall.
+    const colliding =
+      mode !== ControlMode.POSITION
+        ? collidingAfterIntegration
+        : level.collidesWithTileTypeAt(TileType.WALL, particle.position.x, particle.position.y, radius);
 
     particle.setColliding(colliding);
     if (colliding && !this.previousColliding) {
@@ -280,6 +292,7 @@ export class MazeGameModel implements TModel {
     const level = this.levelProperty.value;
     const start = level.startPosition();
     const center = level.tileCenter(start.col, start.row);
+    this.cachedStartCenter = center;
     this.particle.setPositionXY(center.x, center.y);
     this.particle.setColliding(false);
     assert &&
@@ -292,13 +305,13 @@ export class MazeGameModel implements TModel {
   /**
    * Has the particle moved off its starting tile? Used to gate the timer so
    * it doesn't tick while the user is still setting up.
+   *
+   * Uses a cached start center (set in placeParticleAtStart) to avoid
+   * re-scanning the full tile grid on every physics substep.
    */
   private hasStartedMoving(): boolean {
-    const level = this.levelProperty.value;
-    const start = level.startPosition();
-    const startCenter = level.tileCenter(start.col, start.row);
-    const dx = this.particle.position.x - startCenter.x;
-    const dy = this.particle.position.y - startCenter.y;
+    const dx = this.particle.position.x - this.cachedStartCenter.x;
+    const dy = this.particle.position.y - this.cachedStartCenter.y;
     // Movement threshold: a fraction of a tile so jitter doesn't start the timer.
     const threshold = MazeGameConstants.TILE_SIZE * 0.1;
     return dx * dx + dy * dy > threshold * threshold;

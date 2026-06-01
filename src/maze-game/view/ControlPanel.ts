@@ -44,6 +44,7 @@ type ControlPanelSelfOptions = {
 type ControlPanelOptions = ControlPanelSelfOptions & PanelOptions;
 
 export default class ControlPanel extends Panel {
+  private readonly padRef: VoicingNode;
   private readonly padLayerRef: Node;
   private readonly padDragListener: DragListener;
   private readonly padKeyboardListener: KeyboardListener<OneKeyStroke[]>;
@@ -190,6 +191,7 @@ export default class ControlPanel extends Panel {
     });
     pad.addInputListener(this.padKeyboardListener);
 
+    this.padRef = pad;
     this.padLayerRef = padLayer;
     this.arrowRef = arrow;
     this.knobRef = knob;
@@ -314,6 +316,7 @@ export default class ControlPanel extends Panel {
     this.controlModeBridgeProperty.dispose();
     this.padLayerRef.removeInputListener(this.padDragListener);
     this.padDragListener.dispose();
+    this.padRef.removeInputListener(this.padKeyboardListener);
     this.padKeyboardListener.dispose();
     super.dispose();
   }

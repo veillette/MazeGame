@@ -59,6 +59,7 @@ export default class ArenaNode extends Node {
   private readonly velocityArrow: ArrowNode;
   private readonly accelerationArrow: ArrowNode;
   private traceModelPoints: Vector2[] = [];
+  private currentTraceShape: Shape | null = null;
   private flickerTime = 0;
   private finishCenter = new Vector2(0, 0);
   private tileSizeView = 0;
@@ -203,6 +204,7 @@ export default class ArenaNode extends Node {
 
   private readonly clearTrace = (): void => {
     this.traceModelPoints = [];
+    this.currentTraceShape = null;
     this.tracePath.shape = null;
   };
 
@@ -211,12 +213,33 @@ export default class ArenaNode extends Node {
     if (last && last.distance(modelPosition) < MazeGameConstants.TRACE_MIN_SEGMENT_MODEL) {
       return;
     }
+    const transform = this.levelLayoutRefs.modelViewTransform;
+    const viewPoint = transform.modelToViewPosition(modelPosition);
+    const isFirst = this.traceModelPoints.length === 0;
     this.traceModelPoints.push(modelPosition.copy());
-    this.updateTraceShape();
+
+    if (isFirst) {
+      // Start a new shape; don't assign to path yet — need ≥2 points to draw.
+      this.currentTraceShape = new Shape().moveTo(viewPoint.x, viewPoint.y);
+    } else if (this.currentTraceShape) {
+      this.currentTraceShape.lineTo(viewPoint.x, viewPoint.y);
+      // Assign once on the second point; Shape's invalidationEmitter notifies
+      // the Path on every subsequent lineTo so re-assignment is not needed.
+      if (this.traceModelPoints.length === 2) {
+        this.tracePath.shape = this.currentTraceShape;
+      }
+    }
   };
 
+  /**
+   * Rebuild the trace path from scratch using the stored model points.
+   * Called from setLayout() when the view transform changes so all points
+   * are re-projected. During normal play, appendTracePoint extends the path
+   * incrementally (O(1) per point).
+   */
   private readonly updateTraceShape = (): void => {
     if (this.traceModelPoints.length < 2) {
+      this.currentTraceShape = null;
       this.tracePath.shape = null;
       return;
     }
@@ -236,6 +259,7 @@ export default class ArenaNode extends Node {
       const viewPoint = transform.modelToViewPosition(point);
       shape.lineTo(viewPoint.x, viewPoint.y);
     }
+    this.currentTraceShape = shape;
     this.tracePath.shape = shape;
   };
 
@@ -577,6 +601,7 @@ export default class ArenaNode extends Node {
     this.particleVisual.root.removeInputListener(this.particlePressListener);
     this.particlePressListener.dispose();
     this.hideParticleHelpCallout();
+    this.particleHelpCallout.dispose();
     this.particleHelpFadeAnimation.dispose();
     this.winPulseAnimation.dispose();
     super.dispose();

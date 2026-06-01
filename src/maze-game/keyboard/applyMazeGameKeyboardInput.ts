@@ -51,10 +51,22 @@ export const applyMazeGameKeyboardInput = (model: MazeGameModel, keysPressed: st
     return;
   }
 
+  // Normalise to unit vector so a diagonal (two keys held) produces the same
+  // magnitude as a cardinal direction — without this, diagonal movement is √2
+  // times faster than intended.
+  const len = Math.sqrt(dx * dx + dy * dy);
+  dx /= len;
+  dy /= len;
+
   if (mode === ControlMode.POSITION) {
     const step = MazeGameConstants.KEYBOARD_POSITION_STEP;
     const p = model.particle.position;
-    model.particle.setPositionXY(p.x + dx * step, p.y + dy * step);
+    const halfW = MazeGameConstants.LEVEL_MODEL_WIDTH / 2;
+    const halfH = MazeGameConstants.LEVEL_MODEL_HEIGHT / 2;
+    model.particle.setPositionXY(
+      Math.max(-halfW, Math.min(halfW, p.x + dx * step)),
+      Math.max(-halfH, Math.min(halfH, p.y + dy * step)),
+    );
   } else if (mode === ControlMode.VELOCITY) {
     const m = MazeGameConstants.KEYBOARD_VELOCITY_MAGNITUDE;
     model.particle.setVelocityXY(dx * m, dy * m);

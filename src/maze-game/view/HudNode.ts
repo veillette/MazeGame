@@ -58,21 +58,6 @@ export default class HudNode extends Panel {
       textFill: MazeGameColors.foregroundColorProperty,
     });
 
-    const derivedProperties: Array<{ dispose(): void }> = [];
-
-    const elapsedTimeAccessibleValueProperty = new DerivedStringProperty(
-      [model.timeProperty],
-      (time): string => GameTimer.formatTime(time),
-      { phetioFeatured: false },
-    );
-    derivedProperties.push(elapsedTimeAccessibleValueProperty);
-
-    const elapsedTimeAccessibleNameProperty = new PatternStringProperty(a11yStrings.timeDisplayPatternStringProperty, {
-      value: elapsedTimeAccessibleValueProperty,
-    });
-    derivedProperties.push(elapsedTimeAccessibleNameProperty);
-    elapsedTimeNode.accessibleName = elapsedTimeAccessibleNameProperty;
-
     const collisionsDisplay = new NumberDisplay(
       model.collisionsProperty,
       new Range(0, MazeGameLayoutConstants.HUD_COLLISIONS_MAX),
@@ -85,13 +70,6 @@ export default class HudNode extends Panel {
         },
       },
     );
-
-    const collisionsAccessibleNameProperty = new PatternStringProperty(
-      a11yStrings.collisionsDisplayPatternStringProperty,
-      { value: collisionsDisplay.accessibleValueStringProperty },
-    );
-    derivedProperties.push(collisionsAccessibleNameProperty);
-    collisionsDisplay.accessibleName = collisionsAccessibleNameProperty;
 
     const collisionsRow = new HBox({
       spacing: MazeGameLayoutConstants.HUD_HBOX_SPACING,
@@ -153,7 +131,29 @@ export default class HudNode extends Panel {
 
     this.elapsedTimeNodeRef = elapsedTimeNode;
     this.collisionsDisplayRef = collisionsDisplay;
-    this.derivedProperties.push(...derivedProperties);
+
+    // All DerivedProperties are created after super() so they push directly
+    // into this.derivedProperties without needing a pre-super staging array.
+
+    const elapsedTimeAccessibleValueProperty = new DerivedStringProperty(
+      [model.timeProperty],
+      (time): string => GameTimer.formatTime(time),
+      { phetioFeatured: false },
+    );
+    this.derivedProperties.push(elapsedTimeAccessibleValueProperty);
+
+    const elapsedTimeAccessibleNameProperty = new PatternStringProperty(a11yStrings.timeDisplayPatternStringProperty, {
+      value: elapsedTimeAccessibleValueProperty,
+    });
+    this.derivedProperties.push(elapsedTimeAccessibleNameProperty);
+    elapsedTimeNode.accessibleName = elapsedTimeAccessibleNameProperty;
+
+    const collisionsAccessibleNameProperty = new PatternStringProperty(
+      a11yStrings.collisionsDisplayPatternStringProperty,
+      { value: collisionsDisplay.accessibleValueStringProperty },
+    );
+    this.derivedProperties.push(collisionsAccessibleNameProperty);
+    collisionsDisplay.accessibleName = collisionsAccessibleNameProperty;
 
     const collisionWarningVisibleProperty = new DerivedProperty(
       [model.collisionsProperty, model.wonProperty],

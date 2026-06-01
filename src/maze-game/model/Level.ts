@@ -9,7 +9,6 @@
  */
 
 import { assert, assertSlow } from "scenerystack/assert";
-import { Bounds2 } from "scenerystack/dot";
 import MazeGameConstants from "./MazeGameConstants.js";
 import { TileType } from "./TileType.js";
 
@@ -120,14 +119,10 @@ export default class Level {
       if (!this.inBounds(col, row) || this.data[row]?.[col] !== type) {
         continue;
       }
-      const tileBounds = new Bounds2(
-        this.colToX(col),
-        this.rowToY(row),
-        this.colToX(col) + TILE_SIZE,
-        this.rowToY(row) + TILE_SIZE,
-      );
-      const cx = Math.max(tileBounds.minX, Math.min(x, tileBounds.maxX));
-      const cy = Math.max(tileBounds.minY, Math.min(y, tileBounds.maxY));
+      const tileMinX = this.colToX(col);
+      const tileMinY = this.rowToY(row);
+      const cx = Math.max(tileMinX, Math.min(x, tileMinX + TILE_SIZE));
+      const cy = Math.max(tileMinY, Math.min(y, tileMinY + TILE_SIZE));
       const ddx = x - cx;
       const ddy = y - cy;
       if (ddx * ddx + ddy * ddy <= radius * radius) {

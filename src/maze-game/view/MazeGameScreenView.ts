@@ -222,6 +222,9 @@ export class MazeGameScreenView extends ScreenView {
       keys: [...MazeGameConstants.KEYBOARD_KEYS],
       fireOnHold: true,
       fire: (_event: KeyboardEvent | null, keysPressed: string): void => {
+        if (this.infoDialog.isShowingProperty.value) {
+          return;
+        }
         applyMazeGameKeyboardInput(model, keysPressed);
       },
     });
