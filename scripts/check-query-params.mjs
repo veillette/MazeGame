@@ -125,6 +125,57 @@ try {
 
     await page.close();
   }
+
+  // A11y: Tab through PDOM on ?ea (focus order smoke test)
+  const a11yRoot = BASE.replace(/\/?$/, "");
+  const a11yUrl = `${a11yRoot}?ea`;
+  const a11yPage = await context.newPage();
+  const a11yErrors = [];
+  a11yPage.on("pageerror", (err) => a11yErrors.push(err.message));
+
+  let tabSequence = [];
+  try {
+    await a11yPage.goto(a11yUrl, { waitUntil: "load", timeout: LOAD_TIMEOUT_MS });
+    await a11yPage.waitForFunction(() => globalThis.phet?.joist?.sim !== undefined, {
+      timeout: LOAD_TIMEOUT_MS,
+    });
+    await a11yPage.locator("#sim").click({ timeout: 5000 }).catch(() => {});
+
+    for (let i = 0; i < 12; i++) {
+      await a11yPage.keyboard.press("Tab");
+      await sleep(120);
+      const focus = await a11yPage.evaluate(() => {
+        const el = document.activeElement;
+        if (!el) return null;
+        const pdom = el.closest?.("[data-parallel-dom]");
+        return {
+          tag: el.tagName,
+          role: el.getAttribute("role"),
+          ariaLabel: el.getAttribute("aria-label"),
+          id: el.id || null,
+          inPdom: Boolean(pdom),
+        };
+      });
+      if (focus) tabSequence.push(focus);
+    }
+  } catch (err) {
+    a11yErrors.push(err instanceof Error ? err.message : String(err));
+  } finally {
+    await a11yPage.close();
+  }
+
+  const a11yPass = a11yErrors.length === 0 && tabSequence.length >= 3;
+  results.push({
+    name: "a11y-tab-order",
+    url: a11yUrl,
+    simStarted: tabSequence.length > 0,
+    loadError: a11yErrors[0] ?? null,
+    queryState: null,
+    tabSequence,
+    consoleErrors: a11yErrors,
+    assertionFailures: [],
+    pass: a11yPass,
+  });
 } finally {
   await browser.close();
 }

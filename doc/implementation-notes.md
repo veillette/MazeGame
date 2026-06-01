@@ -66,6 +66,7 @@ The sim has a single screen that lives for the app lifetime. Disposal is impleme
 
 - Unit tests: `Level.test.ts`, `MazeGameModel.test.ts` (Vitest).
 - Manual CRC query params: `?ea`, `?fuzz&ea`, `?listenerOrder=random`, `?stringTest=dynamic|X|double|long|rtl`, `?showPointerAreas`.
+- Full guide: [query-parameter-testing.md](query-parameter-testing.md) (recipes, code paths, `npm run test:query-params`).
 
 ## Known Deviations from Original PhET
 
