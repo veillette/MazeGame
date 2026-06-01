@@ -14,11 +14,12 @@ import { Shape } from "scenerystack/kite";
 import type { ModelViewTransform2 } from "scenerystack/phetcommon";
 import type { SceneryEvent } from "scenerystack/scenery";
 import { Circle, type Color, LinearGradient, Node, Path, Rectangle, Text } from "scenerystack/scenery";
-import { ArrowNode, MovementAlerter, PhetFont, SoundDragListener } from "scenerystack/scenery-phet";
+import { ArrowNode, PhetFont, SoundDragListener } from "scenerystack/scenery-phet";
 import { Animation, Easing } from "scenerystack/twixt";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors, { TRANSPARENT_COLOR } from "../../MazeGameColors.js";
 import { createModeDependentHelpTextProperty } from "../a11y/createA11yDerivedProperties.js";
+import MazeGameMovementAlerter from "../a11y/MazeGameMovementAlerter.js";
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 import { particleTraceEnabledProperty } from "../MazeGamePreferences.js";
 import { ControlMode } from "../model/ControlMode.js";
@@ -55,7 +56,8 @@ export default class ArenaNode extends Node {
   private readonly winPulseAnimation: Animation;
 
   private readonly particleDragListener: SoundDragListener;
-  private readonly movementAlerter: MovementAlerter;
+  private readonly movementAlerter: MazeGameMovementAlerter;
+  private particleDragAlertPending = false;
   private readonly movementBoundsProperty: Property<Bounds2>;
   private readonly vectorMultilink: ReturnType<typeof Multilink.multilink>;
   private readonly wallColorMultilink: ReturnType<typeof Multilink.multilink>;
@@ -336,7 +338,7 @@ export default class ArenaNode extends Node {
     this.movementBoundsProperty = new Property(new Bounds2(-halfWidth, -halfHeight, halfWidth, halfHeight));
     this.derivedProperties.push(this.movementBoundsProperty);
 
-    this.movementAlerter = new MovementAlerter(model.particle.positionProperty, {
+    this.movementAlerter = new MazeGameMovementAlerter(model.particle.positionProperty, {
       alertToVoicing: true,
       descriptionAlertNode: this.particleVisual.root,
       modelViewTransform,
@@ -351,6 +353,7 @@ export default class ArenaNode extends Node {
     model.particle.positionProperty.link(this.syncParticlePosition, { disposer: this });
     model.particle.positionProperty.link(this.recordTracePosition, { disposer: this });
     model.gameGenerationProperty.lazyLink(this.resetTraceAfterGame, { disposer: this });
+    model.gameGenerationProperty.lazyLink((): void => this.movementAlerter.reset(), { disposer: this });
 
     const dragEnabledProperty = new DerivedProperty(
       [model.controlModeProperty, model.wonProperty],
@@ -361,6 +364,13 @@ export default class ArenaNode extends Node {
     dragEnabledProperty.link(this.updateDragCursor, { disposer: this });
 
     this.particleDragListener = new SoundDragListener({
+      start: (): void => {
+        if (model.wonProperty.value || model.controlModeProperty.value !== ControlMode.POSITION) {
+          return;
+        }
+        this.particleDragAlertPending = true;
+        this.movementAlerter.captureDragStartPosition();
+      },
       drag: (event: SceneryEvent): void => {
         if (model.wonProperty.value || model.controlModeProperty.value !== ControlMode.POSITION) {
           return;
@@ -371,7 +381,9 @@ export default class ArenaNode extends Node {
         model.particle.setPositionXY(local.x, local.y);
       },
       end: (): void => {
-        if (model.wonProperty.value || model.controlModeProperty.value !== ControlMode.POSITION) {
+        const shouldAlert = this.particleDragAlertPending;
+        this.particleDragAlertPending = false;
+        if (!shouldAlert || model.wonProperty.value || model.controlModeProperty.value !== ControlMode.POSITION) {
           return;
         }
         this.movementAlerter.endDrag();

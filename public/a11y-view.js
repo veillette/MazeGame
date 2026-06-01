@@ -245,7 +245,8 @@ function addLiveObserver(originalElement, listElement, alertContainer) {
 
       const target = /** @type {HTMLElement} */ (mutation.target);
       const responseCategory = target.dataset.responseCategory?.toLowerCase() ?? "other";
-      const responseStyle = RESPONSE_TYPE_STYLES[/** @type {keyof typeof RESPONSE_TYPE_STYLES} */ (responseCategory)] ??
+      const responseStyle =
+        RESPONSE_TYPE_STYLES[/** @type {keyof typeof RESPONSE_TYPE_STYLES} */ (responseCategory)] ??
         RESPONSE_TYPE_STYLES.other;
 
       const listItem = document.createElement("li");
@@ -289,7 +290,7 @@ function patchCheckboxSetter(frameWindow, invalidateView) {
   }
 
   const descriptor = Object.getOwnPropertyDescriptor(frameWindow.HTMLInputElement.prototype, "checked");
-  if (!descriptor?.set || !descriptor.get) {
+  if (!(descriptor?.set && descriptor.get)) {
     return;
   }
 
@@ -407,7 +408,11 @@ function handleSimLoadMessage(event) {
 
   const simDisplayQueue = phet?.joist?.sim?.display?.descriptionUtteranceQueue?.announcer?.ariaLiveContainer;
 
-  if (alertList instanceof HTMLElement && alertContainer instanceof HTMLElement && simDisplayQueue instanceof HTMLElement) {
+  if (
+    alertList instanceof HTMLElement &&
+    alertContainer instanceof HTMLElement &&
+    simDisplayQueue instanceof HTMLElement
+  ) {
     for (const child of simDisplayQueue.children) {
       if (child instanceof HTMLElement) {
         addLiveObserver(child, alertList, alertContainer);
