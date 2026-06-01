@@ -19,11 +19,12 @@ export class MazeGameScreen extends Screen<MazeGameModel, MazeGameScreenView> {
   public constructor(options: MazeGameScreenOptions) {
     super(
       () => new MazeGameModel(),
-      (model) => new MazeGameScreenView(model, { tandem: options.tandem.createTandem("view") }),
+      (model: MazeGameModel): MazeGameScreenView =>
+        new MazeGameScreenView(model, { tandem: options.tandem.createTandem("view") }),
       optionize<MazeGameScreenOptions, EmptySelfOptions, ScreenOptions>()(
         {
           backgroundColorProperty: MazeGameColors.backgroundColorProperty,
-          createKeyboardHelpNode: () => new MazeGameKeyboardHelpContent(),
+          createKeyboardHelpNode: (): MazeGameKeyboardHelpContent => new MazeGameKeyboardHelpContent(),
         },
         options,
       ),

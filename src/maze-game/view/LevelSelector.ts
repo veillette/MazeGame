@@ -13,15 +13,16 @@ import { AquaRadioButtonGroup, Panel, type PanelOptions } from "scenerystack/sun
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
+import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 import { LEVEL_KEYS, LevelKey } from "../model/Levels.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
 import type { MazeGameModel } from "../model/MazeGameModel.js";
 
-const TITLE_FONT = new PhetFont({ size: 14, weight: "bold" });
-const LABEL_FONT = new PhetFont(13);
-const RADIO_BUTTON_RADIUS = 7;
-const RADIO_BUTTON_SPACING = 4;
-const VBOX_SPACING = 6;
+const TITLE_FONT = new PhetFont({
+  size: MazeGameLayoutConstants.LEVEL_SELECTOR_TITLE_FONT_SIZE,
+  weight: "bold",
+});
+const LABEL_FONT = new PhetFont(MazeGameLayoutConstants.LEVEL_SELECTOR_LABEL_FONT_SIZE);
 
 type LevelSelectorSelfOptions = {
   tandem?: Tandem;
@@ -52,13 +53,13 @@ export default class LevelSelector extends Panel {
     const levelNameBridgeProperty = new Property<LevelKey>(model.levelNameProperty.value);
 
     const labelByKey: Record<LevelKey, () => Text> = {
-      [LevelKey.PRACTICE]: () =>
+      [LevelKey.PRACTICE]: (): Text =>
         new Text(strings.practiceStringProperty, { font: LABEL_FONT, fill: MazeGameColors.foregroundColorProperty }),
-      [LevelKey.LEVEL_1]: () =>
+      [LevelKey.LEVEL_1]: (): Text =>
         new Text(strings.level1StringProperty, { font: LABEL_FONT, fill: MazeGameColors.foregroundColorProperty }),
-      [LevelKey.LEVEL_2]: () =>
+      [LevelKey.LEVEL_2]: (): Text =>
         new Text(strings.level2StringProperty, { font: LABEL_FONT, fill: MazeGameColors.foregroundColorProperty }),
-      [LevelKey.CERTAIN_DEATH]: () =>
+      [LevelKey.CERTAIN_DEATH]: (): Text =>
         new Text(strings.certainDeathStringProperty, {
           font: LABEL_FONT,
           fill: MazeGameColors.foregroundColorProperty,
@@ -71,9 +72,9 @@ export default class LevelSelector extends Panel {
       levelNameBridgeProperty,
       LEVEL_KEYS.map((key) => ({ value: key, createNode: labelByKey[key] })),
       {
-        spacing: RADIO_BUTTON_SPACING,
+        spacing: MazeGameLayoutConstants.LEVEL_SELECTOR_RADIO_BUTTON_SPACING,
         radioButtonOptions: {
-          radius: RADIO_BUTTON_RADIUS,
+          radius: MazeGameLayoutConstants.LEVEL_SELECTOR_RADIO_BUTTON_RADIUS,
           stroke: MazeGameColors.foregroundColorProperty,
           selectedColor: MazeGameColors.levelButtonSelectedColorProperty,
           deselectedColor: MazeGameColors.levelButtonUnselectedColorProperty,
@@ -88,7 +89,11 @@ export default class LevelSelector extends Panel {
       fill: MazeGameColors.foregroundColorProperty,
     });
 
-    const content = new VBox({ align: "left", spacing: VBOX_SPACING, children: [title, radioGroup] });
+    const content = new VBox({
+      align: "left",
+      spacing: MazeGameLayoutConstants.LEVEL_SELECTOR_VBOX_SPACING,
+      children: [title, radioGroup],
+    });
 
     super(content, panelOptions);
     radioGroup.accessibleName = strings.titleStringProperty;

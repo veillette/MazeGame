@@ -11,7 +11,7 @@ alwaysApply: true
 **Required:**
 - Explicit return types on all functions and methods
 - Explicit parameter types — no implicit `any`
-- Use `unknown` instead of `any`; narrow with type guards before use
+- Use `unknown` instead of `any` when type is genuinely unknown; narrow with type guards before use
 - Prefer readonly properties and `Readonly<T>` / `ReadonlyArray<T>` where mutation is not intended
 - Use discriminated unions over optional fields where variants differ structurally
 - Prefer `satisfies` over `as` casts for literal/config objects
@@ -23,16 +23,28 @@ alwaysApply: true
 - `// @ts-ignore` or `// @ts-expect-error` without a linked issue or explanation
 - `namespace` declarations, TypeScript `enum`, `module` keyword, `require()`
 
+## General TypeScript Quality
+
+**Required:**
+- `strict: true` in tsconfig (implies `strictNullChecks`, `noImplicitAny`, etc.)
+- Prefer `interface` for object shapes that may be extended; `type` for unions, intersections, and aliases
+- Generics should have meaningful names beyond single letters when context warrants
+- Enums: prefer `const` object + `keyof typeof` union pattern over TypeScript `enum`
+
+**Forbidden:**
+- Class fields initialized to `undefined` just to satisfy the compiler without a type annotation
+
 ## SceneryStack / PhET Conventions
 
 **Required:**
 - All `Property<T>` generics must be explicitly typed
 - `TReadOnlyProperty<T>` in function signatures when a function only reads a property
 - `Emitter<[T]>` must be parameterized; bare `Emitter` is forbidden
-- Dispose patterns: classes that link listeners must implement `dispose()` and call `super.dispose()`; use `{ disposer: this }` on links
+- Dispose patterns: classes that link listeners must implement `dispose()` and call `super.dispose()`; use `{ disposer: this }` on links or `this.disposeMyClass = () => { ... }`
 - Option types via `optionize<MyOptions, SelfOptions, ParentOptions>()` — do not spread raw objects into parent constructors
+- Use `PhetioObject` options pattern (`tandem`, `phetioType`) correctly; never omit `tandem` on instrumented objects
 - Prefer `DerivedProperty` over manual listener-based derived state
-- Node layout: use `boundsProperty` / `ManualConstraint` rather than manual coordinate recalculation or `node.children[i]`
+- Node layout: use `boundsProperty` / `localBoundsProperty` listeners or `ManualConstraint` rather than manual coordinate recalculation
 
 **Forbidden:**
 - Bare `new Property(value)` without a type parameter when T is not inferrable
@@ -44,7 +56,7 @@ alwaysApply: true
 
 - Colors in `src/MazeGameColors.ts` — never hardcode hex in view files
 - Strings in `src/i18n/strings_*.json` — never hardcode display text in view files
-- Positioning uses `this.layoutBounds` and named constants in `MazeGameConstants.ts`
+- Positioning uses `this.layoutBounds` and named constants in `MazeGameLayoutConstants.ts`
 - No TypeScript `enum` — use `const X = { ... } as const` + `keyof typeof`
 - `import type` for type-only imports (`verbatimModuleSyntax`)
 - `import "./brand.js"` must remain the first import in `src/main.ts`
@@ -57,7 +69,7 @@ alwaysApply: true
 | `obj!.field` without comment | null check or assertion with comment |
 | `Property` without type param | `Property<MyType>` |
 | Listener linked, never unlinked | `{ disposer: this }` or stored unlink in `dispose()` |
-| `options = { ...defaults, ...options }` | `optionize()` |
+| `options = { ...defaults, ...options }` | `optionize()` or `combineOptions()` |
 | Inline magic numbers | Named constants with units in the name |
 
 ## Review Format

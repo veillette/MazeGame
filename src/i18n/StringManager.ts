@@ -5,7 +5,7 @@
  * StringProperty that updates automatically when the user switches the locale.
  */
 
-import type { ReadOnlyProperty } from "scenerystack/axon";
+import type { ReadOnlyProperty, TReadOnlyProperty } from "scenerystack/axon";
 import { LocalizedString } from "scenerystack/chipper";
 import MazeGameNamespace from "../MazeGameNamespace.js";
 import stringsEn from "./strings_en.json";
@@ -23,61 +23,61 @@ const stringProperties = LocalizedString.getNestedStringProperties({
 });
 
 export type ControlModeStrings = {
-  readonly titleStringProperty: ReadOnlyProperty<string>;
-  readonly positionStringProperty: ReadOnlyProperty<string>;
-  readonly velocityStringProperty: ReadOnlyProperty<string>;
-  readonly accelerationStringProperty: ReadOnlyProperty<string>;
-  readonly positionShortStringProperty: ReadOnlyProperty<string>;
-  readonly velocityShortStringProperty: ReadOnlyProperty<string>;
-  readonly accelerationShortStringProperty: ReadOnlyProperty<string>;
+  readonly titleStringProperty: TReadOnlyProperty<string>;
+  readonly positionStringProperty: TReadOnlyProperty<string>;
+  readonly velocityStringProperty: TReadOnlyProperty<string>;
+  readonly accelerationStringProperty: TReadOnlyProperty<string>;
+  readonly positionShortStringProperty: TReadOnlyProperty<string>;
+  readonly velocityShortStringProperty: TReadOnlyProperty<string>;
+  readonly accelerationShortStringProperty: TReadOnlyProperty<string>;
 };
 
 export type LevelStrings = {
-  readonly titleStringProperty: ReadOnlyProperty<string>;
-  readonly practiceStringProperty: ReadOnlyProperty<string>;
-  readonly level1StringProperty: ReadOnlyProperty<string>;
-  readonly level2StringProperty: ReadOnlyProperty<string>;
-  readonly certainDeathStringProperty: ReadOnlyProperty<string>;
+  readonly titleStringProperty: TReadOnlyProperty<string>;
+  readonly practiceStringProperty: TReadOnlyProperty<string>;
+  readonly level1StringProperty: TReadOnlyProperty<string>;
+  readonly level2StringProperty: TReadOnlyProperty<string>;
+  readonly certainDeathStringProperty: TReadOnlyProperty<string>;
 };
 
 export type HudStrings = {
-  readonly collisionMultiplierStringProperty: ReadOnlyProperty<string>;
-  readonly wonStringProperty: ReadOnlyProperty<string>;
-  readonly resetLevelStringProperty: ReadOnlyProperty<string>;
-  readonly collisionWarningStringProperty: ReadOnlyProperty<string>;
-  readonly nextLevelStringProperty: ReadOnlyProperty<string>;
-  readonly resetAllStringProperty: ReadOnlyProperty<string>;
+  readonly collisionMultiplierStringProperty: TReadOnlyProperty<string>;
+  readonly wonStringProperty: TReadOnlyProperty<string>;
+  readonly resetLevelStringProperty: TReadOnlyProperty<string>;
+  readonly collisionWarningStringProperty: TReadOnlyProperty<string>;
+  readonly nextLevelStringProperty: TReadOnlyProperty<string>;
+  readonly resetAllStringProperty: TReadOnlyProperty<string>;
 };
 
 export type PreferencesStrings = {
-  readonly particleTraceStringProperty: ReadOnlyProperty<string>;
-  readonly particleTraceDescriptionStringProperty: ReadOnlyProperty<string>;
+  readonly particleTraceStringProperty: TReadOnlyProperty<string>;
+  readonly particleTraceDescriptionStringProperty: TReadOnlyProperty<string>;
 };
 
 export type InfoStrings = {
-  readonly titleStringProperty: ReadOnlyProperty<string>;
-  readonly introductionStringProperty: ReadOnlyProperty<string>;
-  readonly practiceDescriptionStringProperty: ReadOnlyProperty<string>;
-  readonly level1DescriptionStringProperty: ReadOnlyProperty<string>;
-  readonly level2DescriptionStringProperty: ReadOnlyProperty<string>;
-  readonly certainDeathDescriptionStringProperty: ReadOnlyProperty<string>;
+  readonly titleStringProperty: TReadOnlyProperty<string>;
+  readonly introductionStringProperty: TReadOnlyProperty<string>;
+  readonly practiceDescriptionStringProperty: TReadOnlyProperty<string>;
+  readonly level1DescriptionStringProperty: TReadOnlyProperty<string>;
+  readonly level2DescriptionStringProperty: TReadOnlyProperty<string>;
+  readonly certainDeathDescriptionStringProperty: TReadOnlyProperty<string>;
 };
 
 export type KeyboardHelpStrings = {
-  readonly particleStringProperty: ReadOnlyProperty<string>;
-  readonly controlParticleStringProperty: ReadOnlyProperty<string>;
-  readonly controlParticleDescriptionStringProperty: ReadOnlyProperty<string>;
-  readonly stopMotionStringProperty: ReadOnlyProperty<string>;
-  readonly stopMotionDescriptionStringProperty: ReadOnlyProperty<string>;
+  readonly particleStringProperty: TReadOnlyProperty<string>;
+  readonly controlParticleStringProperty: TReadOnlyProperty<string>;
+  readonly controlParticleDescriptionStringProperty: TReadOnlyProperty<string>;
+  readonly stopMotionStringProperty: TReadOnlyProperty<string>;
+  readonly stopMotionDescriptionStringProperty: TReadOnlyProperty<string>;
 };
 
 export type A11yStrings = {
-  readonly controlPadStringProperty: ReadOnlyProperty<string>;
-  readonly particleStringProperty: ReadOnlyProperty<string>;
-  readonly timeDisplayStringProperty: ReadOnlyProperty<string>;
-  readonly collisionsDisplayStringProperty: ReadOnlyProperty<string>;
-  readonly hudPanelStringProperty: ReadOnlyProperty<string>;
-  readonly levelCompleteStringProperty: ReadOnlyProperty<string>;
+  readonly controlPadStringProperty: TReadOnlyProperty<string>;
+  readonly particleStringProperty: TReadOnlyProperty<string>;
+  readonly timeDisplayStringProperty: TReadOnlyProperty<string>;
+  readonly collisionsDisplayStringProperty: TReadOnlyProperty<string>;
+  readonly hudPanelStringProperty: TReadOnlyProperty<string>;
+  readonly levelCompleteStringProperty: TReadOnlyProperty<string>;
 };
 
 export class StringManager {

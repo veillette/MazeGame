@@ -5,7 +5,7 @@
  * and each built-in level.
  */
 
-import { optionize } from "scenerystack/phet-core";
+import { combineOptions, optionize } from "scenerystack/phet-core";
 import { Node, RichText, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { Dialog, type DialogOptions, ScreenView } from "scenerystack/sim";
@@ -21,7 +21,8 @@ type MazeGameInfoDialogOptions = MazeGameInfoDialogSelfOptions & DialogOptions;
 
 const DESCRIPTION_FONT = new PhetFont({ size: MazeGameLayoutConstants.INFO_DIALOG_FONT_SIZE });
 const TITLE_FONT = new PhetFont({ size: MazeGameLayoutConstants.INFO_DIALOG_TITLE_FONT_SIZE, weight: "bold" });
-const MAX_CONTENT_WIDTH = 0.75 * ScreenView.DEFAULT_LAYOUT_BOUNDS.width;
+const MAX_CONTENT_WIDTH =
+  MazeGameLayoutConstants.INFO_DIALOG_MAX_CONTENT_WIDTH_FRACTION * ScreenView.DEFAULT_LAYOUT_BOUNDS.width;
 
 export default class MazeGameInfoDialog extends Dialog {
   private readonly disposeMazeGameInfoDialog: () => void;
@@ -64,13 +65,15 @@ export default class MazeGameInfoDialog extends Dialog {
       font: TITLE_FONT,
     });
 
-    super(content, {
-      ...options,
-      title: new Node({
-        children: [titleText],
-        maxWidth: MAX_CONTENT_WIDTH,
+    super(
+      content,
+      combineOptions<DialogOptions>(options, {
+        title: new Node({
+          children: [titleText],
+          maxWidth: MAX_CONTENT_WIDTH,
+        }),
       }),
-    });
+    );
 
     this.disposeMazeGameInfoDialog = (): void => {
       intro.dispose();

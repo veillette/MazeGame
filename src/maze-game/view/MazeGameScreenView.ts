@@ -170,7 +170,9 @@ export class MazeGameScreenView extends ScreenView {
     const { modelViewTransform, arenaBounds } = computeArenaLayout(this.visibleBoundsProperty.value);
     this.arenaNode = new ArenaNode(model, modelViewTransform, arenaBounds);
 
-    this.controlPanel = new ControlPanel(model);
+    this.controlPanel = new ControlPanel(model, {
+      tandem: options.tandem.createTandem("controlPanel"),
+    });
     this.levelSelector = new LevelSelector(model, {
       tandem: options.tandem.createTandem("levelSelector"),
     });
@@ -180,7 +182,7 @@ export class MazeGameScreenView extends ScreenView {
 
     this.resetAllButton = new ResetAllButton({
       baseColor: MazeGameColors.resetAllButtonColorProperty,
-      listener: () => {
+      listener: (): void => {
         this.interruptSubtreeInput();
         model.reset();
       },
@@ -222,7 +224,7 @@ export class MazeGameScreenView extends ScreenView {
     this.keyboardListener = KeyboardListener.createGlobal(this, {
       keys: [...KEYS],
       fireOnHold: true,
-      fire: (_event, keysPressed) => {
+      fire: (_event: KeyboardEvent | null, keysPressed: string): void => {
         if (model.wonProperty.value) {
           return;
         }

@@ -13,10 +13,12 @@
 import { Multilink, Property } from "scenerystack/axon";
 import { Bounds2, clamp, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
+import { optionize } from "scenerystack/phet-core";
 import type { ProfileColorProperty } from "scenerystack/scenery";
 import { Circle, DragListener, Node, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
-import { Panel, RectangularRadioButtonGroup } from "scenerystack/sun";
+import { Panel, type PanelOptions, RectangularRadioButtonGroup } from "scenerystack/sun";
+import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
@@ -33,6 +35,12 @@ const COLOR_BY_MODE: Record<ControlMode, ProfileColorProperty> = {
   [ControlMode.ACCELERATION]: MazeGameColors.accelerationVectorProperty,
 };
 
+type ControlPanelSelfOptions = {
+  tandem?: Tandem;
+};
+
+type ControlPanelOptions = ControlPanelSelfOptions & PanelOptions;
+
 export default class ControlPanel extends Panel {
   private readonly padLayerRef: Node;
   private readonly padDragListener: DragListener;
@@ -47,10 +55,25 @@ export default class ControlPanel extends Panel {
     this.knobRef.fill = color;
   };
 
-  public constructor(model: MazeGameModel) {
+  public constructor(model: MazeGameModel, providedOptions?: ControlPanelOptions) {
     const stringManager = StringManager.getInstance();
     const strings = stringManager.getControlModeStrings();
     const a11yStrings = stringManager.getA11yStrings();
+
+    const options = optionize<ControlPanelOptions, ControlPanelSelfOptions, PanelOptions>()(
+      {
+        tandem: Tandem.OPT_OUT,
+        fill: MazeGameColors.panelFillProperty,
+        stroke: MazeGameColors.panelStrokeProperty,
+        cornerRadius: MazeGameConstants.PANEL_CORNER_RADIUS,
+        xMargin: MazeGameConstants.PANEL_X_MARGIN,
+        yMargin: MazeGameConstants.PANEL_Y_MARGIN,
+        accessibleName: strings.titleStringProperty,
+      },
+      providedOptions,
+    );
+
+    const { tandem, ...panelOptions } = options;
 
     const controlModeBridgeProperty = new Property<ControlMode>(model.controlModeProperty.value);
 
@@ -70,7 +93,7 @@ export default class ControlPanel extends Panel {
       [
         {
           value: ControlMode.POSITION,
-          createNode: () =>
+          createNode: (): Text =>
             new Text(strings.positionShortStringProperty, {
               font: tabFont,
               fill: COLOR_BY_MODE[ControlMode.POSITION],
@@ -79,7 +102,7 @@ export default class ControlPanel extends Panel {
         },
         {
           value: ControlMode.VELOCITY,
-          createNode: () =>
+          createNode: (): Text =>
             new Text(strings.velocityShortStringProperty, {
               font: tabFont,
               fill: COLOR_BY_MODE[ControlMode.VELOCITY],
@@ -88,7 +111,7 @@ export default class ControlPanel extends Panel {
         },
         {
           value: ControlMode.ACCELERATION,
-          createNode: () =>
+          createNode: (): Text =>
             new Text(strings.accelerationShortStringProperty, {
               font: tabFont,
               fill: COLOR_BY_MODE[ControlMode.ACCELERATION],
@@ -96,7 +119,7 @@ export default class ControlPanel extends Panel {
           options: { accessibleName: strings.accelerationStringProperty },
         },
       ],
-      { orientation: "horizontal", spacing: MazeGameLayoutConstants.CONTROL_PANEL_TAB_SPACING },
+      { orientation: "horizontal", spacing: MazeGameLayoutConstants.CONTROL_PANEL_TAB_SPACING, tandem },
     );
     const padBackground = new Rectangle(-HALF, -HALF, AREA, AREA, {
       fill: MazeGameColors.padFillProperty,
@@ -124,14 +147,8 @@ export default class ControlPanel extends Panel {
       spacing: MazeGameLayoutConstants.CONTROL_PANEL_VBOX_SPACING,
       children: [header, tabs, pad],
     });
-    super(content, {
-      fill: MazeGameColors.panelFillProperty,
-      stroke: MazeGameColors.panelStrokeProperty,
-      cornerRadius: MazeGameConstants.PANEL_CORNER_RADIUS,
-      xMargin: MazeGameConstants.PANEL_X_MARGIN,
-      yMargin: MazeGameConstants.PANEL_Y_MARGIN,
-      accessibleName: strings.titleStringProperty,
-    });
+
+    super(content, panelOptions);
 
     this.padLayerRef = padLayer;
     this.arrowRef = arrow;

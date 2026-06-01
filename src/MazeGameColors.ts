@@ -84,6 +84,9 @@ const MazeGameColors = {
 
   // Reset All button (bottom-right).
   resetAllButtonColorProperty: profileColor("resetAllButton", "#ff9800", "#ef6c00"),
+
+  // Preferences toggle switch (on state).
+  toggleSwitchTrackFillRightProperty: profileColor("toggleSwitchTrackFillRight", "#64bd5a", "#64bd5a"),
 };
 
 MazeGameNamespace.register("MazeGameColors", MazeGameColors);

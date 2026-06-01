@@ -10,14 +10,15 @@
 
 import "./splash.js";
 
-import type { TBrand } from "scenerystack/brand";
+import type { LinkObject, TBrand } from "scenerystack/brand";
 import { brand, madeWithSceneryStackOnDark, madeWithSceneryStackOnLight } from "scenerystack/brand";
+import type { Locale } from "scenerystack/joist";
 
 const Brand: TBrand = {
   id: "made-with-scenerystack",
   name: null,
   copyright: null,
-  getLinks: () => [],
+  getLinks: (_simName: string, _locale: Locale): LinkObject[] => [],
   logoOnBlackBackground: madeWithSceneryStackOnDark,
   logoOnWhiteBackground: madeWithSceneryStackOnLight,
 };

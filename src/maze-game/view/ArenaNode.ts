@@ -13,7 +13,8 @@ import type { Bounds2 } from "scenerystack/dot";
 import { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import type { ModelViewTransform2 } from "scenerystack/phetcommon";
-import { Circle, DragListener, LinearGradient, Node, Path, Rectangle, Text } from "scenerystack/scenery";
+import type { SceneryEvent } from "scenerystack/scenery";
+import { Circle, type Color, DragListener, LinearGradient, Node, Path, Rectangle, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
@@ -257,7 +258,7 @@ export default class ArenaNode extends Node {
         MazeGameColors.finishClosedColorProperty,
         MazeGameColors.finishWonColorProperty,
       ],
-      (collisions, won, normal, closed, victory) => {
+      (collisions: number, won: boolean, normal: Color, closed: Color, victory: Color): Color => {
         if (won) {
           return victory;
         }
@@ -329,7 +330,7 @@ export default class ArenaNode extends Node {
     dragEnabledProperty.link(this.updateDragCursor, { disposer: this });
 
     this.particleDragListener = new DragListener({
-      drag: (event) => {
+      drag: (event: SceneryEvent, _listener: DragListener): void => {
         if (model.wonProperty.value || model.controlModeProperty.value !== ControlMode.POSITION) {
           return;
         }
@@ -369,7 +370,7 @@ export default class ArenaNode extends Node {
         model.controlModeProperty,
         model.wonProperty,
       ],
-      (position, velocity, acceleration, mode, won) => {
+      (position: Vector2, velocity: Vector2, acceleration: Vector2, mode: ControlMode, won: boolean): void => {
         const transform = this.levelLayoutRefs.modelViewTransform;
         const vp = transform.modelToViewPosition(position);
 

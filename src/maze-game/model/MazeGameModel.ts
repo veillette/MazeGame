@@ -75,10 +75,10 @@ export class MazeGameModel implements TModel {
   };
 
   public constructor() {
-    this.levelProperty = new DerivedProperty([this.levelNamePropertyImpl], (name) => LEVELS[name]);
+    this.levelProperty = new DerivedProperty([this.levelNamePropertyImpl], (name: LevelKey): Level => LEVELS[name]);
     this.isLastLevelProperty = new DerivedProperty(
       [this.levelNamePropertyImpl],
-      (name) => LEVEL_KEYS.indexOf(name) === LEVEL_KEYS.length - 1,
+      (name: LevelKey): boolean => LEVEL_KEYS.indexOf(name) === LEVEL_KEYS.length - 1,
     );
 
     // Reset particle position & game state when the level changes.

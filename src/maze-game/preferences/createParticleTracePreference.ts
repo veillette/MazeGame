@@ -11,6 +11,7 @@ import { PhetFont } from "scenerystack/scenery-phet";
 import { ToggleSwitch, type ToggleSwitchOptions } from "scenerystack/sun";
 import type { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
+import MazeGameColors from "../../MazeGameColors.js";
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 import { particleTraceEnabledProperty } from "../MazeGamePreferences.js";
 
@@ -28,8 +29,11 @@ export const createParticleTracePreference = (parentTandem: Tandem): HBox => {
     true,
     combineOptions<ToggleSwitchOptions>({
       tandem: parentTandem.createTandem("particleTraceToggleSwitch"),
-      size: new Dimension2(36, 18),
-      trackFillRight: "#64bd5a",
+      size: new Dimension2(
+        MazeGameLayoutConstants.PREFERENCES_TOGGLE_SWITCH_WIDTH,
+        MazeGameLayoutConstants.PREFERENCES_TOGGLE_SWITCH_HEIGHT,
+      ),
+      trackFillRight: MazeGameColors.toggleSwitchTrackFillRightProperty,
       accessibleName: strings.particleTraceStringProperty,
     }),
   );

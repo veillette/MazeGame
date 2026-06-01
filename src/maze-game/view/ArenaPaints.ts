@@ -5,9 +5,10 @@
  * Colors come from MazeGameColors; geometry scales with view tile size.
  */
 
+import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
-import { Circle, Color, Node, Path, Pattern, type ProfileColorProperty, RadialGradient } from "scenerystack/scenery";
+import { Circle, Color, Node, Path, Pattern, RadialGradient } from "scenerystack/scenery";
 import { StarShape } from "scenerystack/scenery-phet";
 import MazeGameColors from "../../MazeGameColors.js";
 
@@ -184,8 +185,8 @@ export function createGoalOverlayNode(tileSizeView: number): Node {
  */
 export function createWallFill(
   tileSizeView: number,
-  wallColorProperty: ProfileColorProperty,
-  wallShadowColorProperty: ProfileColorProperty,
+  wallColorProperty: TReadOnlyProperty<Color>,
+  wallShadowColorProperty: TReadOnlyProperty<Color>,
 ): Pattern {
   return createBrickWallPattern(tileSizeView, toColor(wallColorProperty.value), toColor(wallShadowColorProperty.value));
 }
