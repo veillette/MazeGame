@@ -77,6 +77,17 @@ Same `fuzzFrame` path; requires `supportsInteractiveDescription` (on by default)
 
 **Ctrl+Shift+H** toggles the joist Helper (visual tree, PDOM tree, bounds, runtime **Fuzz** checkbox).
 
+### A11y View (side-by-side PDOM mirror)
+
+PhET-style development wrapper served as static files (not a query param):
+
+| URL | Purpose |
+|-----|---------|
+| `http://localhost:5173/a11y-view.html` | Sim in iframe + live PDOM copy (blue) + interactive alert log (orange) |
+| `…/a11y-view.html?locale=fr` | Same view; query params forward to the embedded sim |
+
+Files: [`public/a11y-view.html`](../public/a11y-view.html), [`public/a11y-view.js`](../public/a11y-view.js), [`public/a11y-view.css`](../public/a11y-view.css). The iframe loads `./?ea&postMessageOnLoad&supportsInteractiveDescription=true` (plus any params from the wrapper URL). Interact with the sim in the iframe; Tab focus is highlighted in orange inside the sim.
+
 ---
 
 ## Copy-paste test recipes

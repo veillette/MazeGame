@@ -16,10 +16,10 @@ const securityHeaders: Record<string, string> = {
     "font-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
-    "frame-ancestors 'none'",
+    "frame-ancestors 'self'",
   ].join("; "),
   "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
+  "X-Frame-Options": "SAMEORIGIN",
 };
 
 export default defineConfig({

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>A11y View: Maze Game</title>
+    <link rel="stylesheet" href="./a11y-view.css" />
+  </head>
+  <body>
+    <h1>A11y View: Maze Game</h1>
+
+    <p>
+      The A11y View shows a live copy of the simulation&rsquo;s Parallel DOM (PDOM) and interactive alerts. Interact
+      with the sim in the iframe using a keyboard or mouse; the orange activity log and blue PDOM panel update in
+      real time. Learners use the sim alone &mdash; not this tool.
+    </p>
+
+    <div class="left">
+      <h2 class="sr-only">Simulation</h2>
+      <div class="aspect-ratio">
+        <iframe id="iframe" title="Maze Game simulation"></iframe>
+      </div>
+    </div>
+
+    <div class="right">
+      <section id="alerts" aria-labelledby="activity-log-heading">
+        <h2 id="activity-log-heading">Activity log of Interactive Alerts</h2>
+        <p>
+          Alerts powered by <code>aria-live</code> appear below (newest last). Assertive alerts are outlined in pink.
+        </p>
+        <div class="alert_copy_container">
+          <div id="polite-element-container">
+            <ul id="alert-list" class="alert_copy"></ul>
+          </div>
+        </div>
+        <button type="button" id="clear-activity-log-button">Clear log</button>
+      </section>
+
+      <section id="pdom" aria-labelledby="pdom-heading">
+        <h2 id="pdom-heading">PDOM &amp; Descriptions</h2>
+        <p>Content updates in real time to reflect the current accessible state of the sim.</p>
+        <div class="dom_copy_container">
+          <div id="pdom-copy"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="clearfix"></div>
+
+    <script type="module" src="./a11y-view.js"></script>
+  </body>
+</html>
