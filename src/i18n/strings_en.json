@@ -7,7 +7,10 @@
     "title": "Control",
     "position": "Position",
     "velocity": "Velocity",
-    "acceleration": "Acceleration"
+    "acceleration": "Acceleration",
+    "positionShort": "Pos",
+    "velocityShort": "Vel",
+    "accelerationShort": "Accel"
   },
   "levels": {
     "title": "Level",
@@ -21,7 +24,7 @@
     "collisions": "Collisions",
     "won": "Goal!",
     "resetLevel": "Reset Level",
-    "collisionWarning": "Collision! Reset to try again.",
+    "collisionWarning": "Collision!",
     "nextLevel": "Next Level",
     "resetAll": "Reset All"
   },

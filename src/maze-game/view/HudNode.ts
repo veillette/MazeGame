@@ -1,39 +1,39 @@
 /**
  * HudNode.ts
  *
- * Displays the elapsed time, the collision counter, a "Reset Level" button,
- * a collision-warning message (visible after the first wall hit), and a
- * "Next Level" button that appears on winning (hidden on the final level).
+ * Displays elapsed time, collision count, icon action buttons (reset / next level),
+ * and a collision-warning message.
  */
 
 import { DerivedProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { HBox, Text, VBox } from "scenerystack/scenery";
-import { NumberDisplay, PhetFont } from "scenerystack/scenery-phet";
-import { Panel, TextPushButton } from "scenerystack/sun";
+import { NumberDisplay, PhetFont, RestartButton, StepForwardButton } from "scenerystack/scenery-phet";
+import { Panel } from "scenerystack/sun";
+import { ElapsedTimeNode } from "scenerystack/vegas";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
 import type { MazeGameModel } from "../model/MazeGameModel.js";
 
-const LABEL_FONT = new PhetFont({ size: 14, weight: "bold" });
 const VALUE_FONT = new PhetFont(14);
-const BUTTON_FONT = new PhetFont(13);
 const WARNING_FONT = new PhetFont({ size: 12, weight: "bold" });
+const COLLISION_MARKER_FONT = new PhetFont({ size: 16, weight: "bold" });
 const HBOX_SPACING = 6;
 const VBOX_SPACING = 6;
+const CLOCK_ICON_RADIUS = 11;
 
 type HudNodeOptions = {
   interruptInput?: () => void;
 };
 
 export default class HudNode extends Panel {
-  private readonly timeDisplayRef: NumberDisplay;
+  private readonly elapsedTimeNodeRef: ElapsedTimeNode;
   private readonly collisionsDisplayRef: NumberDisplay;
   private readonly derivedProperties: Array<{ dispose(): void }> = [];
 
   private readonly collisionWarningRef!: Text;
-  private readonly nextLevelButtonRef!: TextPushButton;
+  private readonly nextLevelButtonRef!: StepForwardButton;
 
   private readonly updateCollisionWarningVisible = (v: boolean): void => {
     this.collisionWarningRef.visible = v;
@@ -53,20 +53,12 @@ export default class HudNode extends Panel {
         // No-op when HudNode is constructed without a ScreenView interrupt callback.
       });
 
-    const timeDisplay = new NumberDisplay(model.timeProperty, new Range(0, 999), {
-      decimalPlaces: 1,
-      align: "right",
-      textOptions: { font: VALUE_FONT, fill: MazeGameColors.foregroundColorProperty },
+    const elapsedTimeNode = new ElapsedTimeNode(model.timeProperty, {
+      clockIconRadius: CLOCK_ICON_RADIUS,
+      font: VALUE_FONT,
+      textFill: MazeGameColors.foregroundColorProperty,
     });
-    timeDisplay.accessibleName = a11yStrings.timeDisplayStringProperty;
-
-    const timeRow = new HBox({
-      spacing: HBOX_SPACING,
-      children: [
-        new Text(strings.timeStringProperty, { font: LABEL_FONT, fill: MazeGameColors.foregroundColorProperty }),
-        timeDisplay,
-      ],
-    });
+    elapsedTimeNode.accessibleName = a11yStrings.timeDisplayStringProperty;
 
     const collisionsDisplay = new NumberDisplay(model.collisionsProperty, new Range(0, 9999), {
       decimalPlaces: 0,
@@ -78,7 +70,7 @@ export default class HudNode extends Panel {
     const collisionsRow = new HBox({
       spacing: HBOX_SPACING,
       children: [
-        new Text(strings.collisionsStringProperty, { font: LABEL_FONT, fill: MazeGameColors.foregroundColorProperty }),
+        new Text("×", { font: COLLISION_MARKER_FONT, fill: MazeGameColors.foregroundColorProperty }),
         collisionsDisplay,
       ],
     });
@@ -91,8 +83,7 @@ export default class HudNode extends Panel {
     });
     collisionWarning.accessibleParagraph = strings.collisionWarningStringProperty;
 
-    const resetLevelButton = new TextPushButton(strings.resetLevelStringProperty, {
-      font: BUTTON_FONT,
+    const resetLevelButton = new RestartButton({
       baseColor: MazeGameColors.resetLevelButtonColorProperty,
       listener: () => {
         interruptInput();
@@ -101,8 +92,7 @@ export default class HudNode extends Panel {
       accessibleName: strings.resetLevelStringProperty,
     });
 
-    const nextLevelButton = new TextPushButton(strings.nextLevelStringProperty, {
-      font: BUTTON_FONT,
+    const nextLevelButton = new StepForwardButton({
       baseColor: MazeGameColors.nextLevelButtonColorProperty,
       listener: () => {
         interruptInput();
@@ -112,10 +102,15 @@ export default class HudNode extends Panel {
       accessibleName: strings.nextLevelStringProperty,
     });
 
+    const actionButtons = new HBox({
+      spacing: HBOX_SPACING,
+      children: [resetLevelButton, nextLevelButton],
+    });
+
     const content = new VBox({
       align: "left",
       spacing: VBOX_SPACING,
-      children: [timeRow, collisionsRow, collisionWarning, resetLevelButton, nextLevelButton],
+      children: [elapsedTimeNode, collisionsRow, collisionWarning, actionButtons],
     });
 
     super(content, {
@@ -128,7 +123,7 @@ export default class HudNode extends Panel {
       accessibleName: a11yStrings.hudPanelStringProperty,
     });
 
-    this.timeDisplayRef = timeDisplay;
+    this.elapsedTimeNodeRef = elapsedTimeNode;
     this.collisionsDisplayRef = collisionsDisplay;
     this.collisionWarningRef = collisionWarning;
     this.nextLevelButtonRef = nextLevelButton;
@@ -152,7 +147,7 @@ export default class HudNode extends Panel {
     for (const derivedProperty of this.derivedProperties) {
       derivedProperty.dispose();
     }
-    this.timeDisplayRef.dispose();
+    this.elapsedTimeNodeRef.dispose();
     this.collisionsDisplayRef.dispose();
     super.dispose();
   }

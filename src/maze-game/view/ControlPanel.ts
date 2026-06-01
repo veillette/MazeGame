@@ -77,20 +77,29 @@ export default class ControlPanel extends Panel {
         {
           value: ControlMode.POSITION,
           createNode: () =>
-            new Text(strings.positionStringProperty, { font: tabFont, fill: COLOR_BY_MODE[ControlMode.POSITION] }),
+            new Text(strings.positionShortStringProperty, {
+              font: tabFont,
+              fill: COLOR_BY_MODE[ControlMode.POSITION],
+            }),
+          options: { accessibleName: strings.positionStringProperty },
         },
         {
           value: ControlMode.VELOCITY,
           createNode: () =>
-            new Text(strings.velocityStringProperty, { font: tabFont, fill: COLOR_BY_MODE[ControlMode.VELOCITY] }),
+            new Text(strings.velocityShortStringProperty, {
+              font: tabFont,
+              fill: COLOR_BY_MODE[ControlMode.VELOCITY],
+            }),
+          options: { accessibleName: strings.velocityStringProperty },
         },
         {
           value: ControlMode.ACCELERATION,
           createNode: () =>
-            new Text(strings.accelerationStringProperty, {
+            new Text(strings.accelerationShortStringProperty, {
               font: tabFont,
               fill: COLOR_BY_MODE[ControlMode.ACCELERATION],
             }),
+          options: { accessibleName: strings.accelerationStringProperty },
         },
       ],
       { orientation: "horizontal", spacing: TAB_SPACING },

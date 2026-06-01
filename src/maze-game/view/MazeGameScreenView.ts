@@ -129,7 +129,9 @@ export class MazeGameScreenView extends ScreenView {
     this.controlPanel.right = layoutBounds.maxX - MARGIN;
     this.controlPanel.top = MARGIN;
 
-    const levelSelector = new LevelSelector(model);
+    const levelSelector = new LevelSelector(model, {
+      tandem: providedOptions.tandem.createTandem("levelSelector"),
+    });
     levelSelector.right = layoutBounds.maxX - MARGIN;
     levelSelector.top = this.controlPanel.bottom + RIGHT_COLUMN_GAP;
 
