@@ -23,6 +23,7 @@ import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
 import { createModeDependentHelpTextProperty } from "../a11y/createA11yDerivedProperties.js";
 import { applyMazeGameKeyboardInput } from "../keyboard/applyMazeGameKeyboardInput.js";
+import MazeGameHotkeyData from "../keyboard/MazeGameHotkeyData.js";
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 import { ControlMode } from "../model/ControlMode.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
@@ -183,7 +184,7 @@ export default class ControlPanel extends Panel {
     this.derivedProperties.push(controlPadHelpTextProperty);
 
     this.padKeyboardListener = new KeyboardListener({
-      keys: [...MazeGameConstants.KEYBOARD_KEYS],
+      keys: [...MazeGameHotkeyData.KEYBOARD_KEYS],
       fireOnHold: true,
       fire: (_event: KeyboardEvent | null, keysPressed: string): void => {
         applyMazeGameKeyboardInput(model, keysPressed);

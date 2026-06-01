@@ -41,9 +41,8 @@ const MazeGameConstants = {
   KEYBOARD_VELOCITY_MAGNITUDE: 4,
   KEYBOARD_ACCELERATION_MAGNITUDE: 1,
 
-  // Keyboard keys wired through KeyboardListener in MazeGameScreenView.
+  // Keyboard input logic constants (key layout lives in MazeGameHotkeyData).
   KEYBOARD_STOP_KEY: "space",
-  KEYBOARD_KEYS: ["arrowLeft", "arrowRight", "arrowUp", "arrowDown", "a", "d", "w", "s", "space"] as const,
   KEYBOARD_AXIS_BY_KEY: {
     arrowLeft: [-1, 0],
     a: [-1, 0],

@@ -41,6 +41,7 @@ import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
 import MazeGameDescriber from "../a11y/MazeGameDescriber.js";
 import { applyMazeGameKeyboardInput } from "../keyboard/applyMazeGameKeyboardInput.js";
+import MazeGameHotkeyData from "../keyboard/MazeGameHotkeyData.js";
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
 import type { MazeGameModel } from "../model/MazeGameModel.js";
@@ -219,7 +220,7 @@ export class MazeGameScreenView extends ScreenView {
     this.applyLayout();
 
     this.keyboardListener = KeyboardListener.createGlobal(this, {
-      keys: [...MazeGameConstants.KEYBOARD_KEYS],
+      keys: [...MazeGameHotkeyData.KEYBOARD_KEYS],
       fireOnHold: true,
       fire: (_event: KeyboardEvent | null, keysPressed: string): void => {
         if (this.infoDialog.isShowingProperty.value) {

@@ -2,28 +2,23 @@
  * MazeGameKeyboardHelpSection.ts
  *
  * Keyboard-help section describing arrow/WASD particle control and Space to stop motion.
+ * Rows are derived from MazeGameHotkeyData so the icons always match the actual bindings.
  */
 
-import {
-  KeyboardHelpIconFactory,
-  KeyboardHelpSection,
-  KeyboardHelpSectionRow,
-  TextKeyNode,
-} from "scenerystack/scenery-phet";
+import { KeyboardHelpSection, KeyboardHelpSectionRow } from "scenerystack/scenery-phet";
 import type { KeyboardHelpStrings } from "../../i18n/StringManager.js";
+import MazeGameHotkeyData from "./MazeGameHotkeyData.js";
 
 export default class MazeGameKeyboardHelpSection extends KeyboardHelpSection {
   public constructor(strings: KeyboardHelpStrings) {
-    const controlParticleRow = KeyboardHelpSectionRow.labelWithIcon(
-      strings.controlParticleStringProperty,
-      KeyboardHelpIconFactory.arrowOrWasdKeysRowIcon(),
-      {
-        labelInnerContent: strings.controlParticleDescriptionStringProperty,
-      },
-    );
+    const controlParticleRow = KeyboardHelpSectionRow.fromHotkeyData(MazeGameHotkeyData.MOVE_PARTICLE, {
+      labelStringProperty: strings.controlParticleStringProperty,
+      pdomLabelStringProperty: strings.controlParticleDescriptionStringProperty,
+    });
 
-    const stopMotionRow = KeyboardHelpSectionRow.labelWithIcon(strings.stopMotionStringProperty, TextKeyNode.space(), {
-      labelInnerContent: strings.stopMotionDescriptionStringProperty,
+    const stopMotionRow = KeyboardHelpSectionRow.fromHotkeyData(MazeGameHotkeyData.STOP_MOTION, {
+      labelStringProperty: strings.stopMotionStringProperty,
+      pdomLabelStringProperty: strings.stopMotionDescriptionStringProperty,
     });
 
     super(strings.particleStringProperty, [controlParticleRow, stopMotionRow]);
