@@ -16,6 +16,7 @@ const securityHeaders: Record<string, string> = {
     "font-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
+    // Same-origin framing allows public/a11y-view.html to embed the sim in an iframe.
     "frame-ancestors 'self'",
   ].join("; "),
   "X-Content-Type-Options": "nosniff",
