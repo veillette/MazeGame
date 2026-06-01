@@ -9,6 +9,7 @@ import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import { Screen, type ScreenOptions } from "scenerystack/sim";
 import type { Tandem } from "scenerystack/tandem";
 import MazeGameColors from "../MazeGameColors.js";
+import MazeGameKeyboardHelpContent from "./keyboard/MazeGameKeyboardHelpContent.js";
 import { MazeGameModel } from "./model/MazeGameModel.js";
 import { MazeGameScreenView } from "./view/MazeGameScreenView.js";
 
@@ -22,6 +23,7 @@ export class MazeGameScreen extends Screen<MazeGameModel, MazeGameScreenView> {
       optionize<MazeGameScreenOptions, EmptySelfOptions, ScreenOptions>()(
         {
           backgroundColorProperty: MazeGameColors.backgroundColorProperty,
+          createKeyboardHelpNode: () => new MazeGameKeyboardHelpContent(),
         },
         options,
       ),

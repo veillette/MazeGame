@@ -31,6 +31,13 @@
     "particleTrace": "Trajectoire",
     "particleTraceDescription": "Afficher le chemin parcouru par la particule."
   },
+  "keyboardHelp": {
+    "particle": "Particule",
+    "controlParticle": "Contrôler la particule",
+    "controlParticleDescription": "Touches fléchées ou W, A, S, D. En mode Position, déplace la particule. En mode Vitesse, définit la vitesse. En mode Accélération, définit l'accélération.",
+    "stopMotion": "Arrêter le mouvement",
+    "stopMotionDescription": "En mode Vitesse ou Accélération, remet la vitesse ou l'accélération à zéro."
+  },
   "a11y": {
     "controlPad": "Panneau de contrôle. Faites glisser le bouton pour régler la position, la vitesse ou l'accélération.",
     "particle": "Particule. Faites glisser pour déplacer en mode Position.",

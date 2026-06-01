@@ -31,6 +31,13 @@
     "particleTrace": "Particle trace",
     "particleTraceDescription": "Show the path traveled by the particle."
   },
+  "keyboardHelp": {
+    "particle": "Particle",
+    "controlParticle": "Control particle",
+    "controlParticleDescription": "Arrow keys or W, A, S, D. In Position mode, moves the particle. In Velocity mode, sets velocity. In Acceleration mode, sets acceleration.",
+    "stopMotion": "Stop motion",
+    "stopMotionDescription": "In Velocity or Acceleration mode, sets velocity or acceleration to zero."
+  },
   "a11y": {
     "controlPad": "Control pad. Drag the knob to set position, velocity, or acceleration.",
     "particle": "Particle. Drag to move when Position control mode is selected.",
