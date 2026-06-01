@@ -10,11 +10,8 @@ import { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { Circle, Color, Node, Path, Pattern, RadialGradient } from "scenerystack/scenery";
 import { StarShape } from "scenerystack/scenery-phet";
-import MazeGameColors from "../../MazeGameColors.js";
-
-const BRICK_PATTERN_MIN_UNIT_PX = 12;
-const BRICK_MORTAR_RATIO = 0.09;
-const BRICK_ROW_COUNT = 2;
+import MazeGameColors, { TRANSPARENT_COLOR } from "../../MazeGameColors.js";
+import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 
 function toColor(paint: Color | string): Color {
   return paint instanceof Color ? paint : Color.toColor(paint);
@@ -24,7 +21,7 @@ function toColor(paint: Color | string): Color {
  * Repeatable brick-wall pattern for wall tiles.
  */
 export function createBrickWallPattern(tileSizeView: number, wallColor: Color, shadowColor: Color): Pattern {
-  const unit = Math.max(BRICK_PATTERN_MIN_UNIT_PX, Math.round(tileSizeView));
+  const unit = Math.max(MazeGameLayoutConstants.ARENA_BRICK_PATTERN_MIN_UNIT_PX, Math.round(tileSizeView));
   const canvas = document.createElement("canvas");
   canvas.width = unit;
   canvas.height = unit;
@@ -35,10 +32,13 @@ export function createBrickWallPattern(tileSizeView: number, wallColor: Color, s
 
   const mortar = shadowColor.toCSS();
   const brick = wallColor.toCSS();
-  const highlight = wallColor.brighterColor(0.18).toCSS();
-  const shade = wallColor.darkerColor(0.14).toCSS();
-  const mortarWidth = Math.max(1, Math.round(unit * BRICK_MORTAR_RATIO));
-  const rowHeight = Math.floor((unit - mortarWidth * (BRICK_ROW_COUNT + 1)) / BRICK_ROW_COUNT);
+  const highlight = wallColor.brighterColor(MazeGameLayoutConstants.ARENA_BRICK_HIGHLIGHT_FACTOR).toCSS();
+  const shade = wallColor.darkerColor(MazeGameLayoutConstants.ARENA_BRICK_SHADE_FACTOR).toCSS();
+  const mortarWidth = Math.max(1, Math.round(unit * MazeGameLayoutConstants.ARENA_BRICK_MORTAR_RATIO));
+  const rowHeight = Math.floor(
+    (unit - mortarWidth * (MazeGameLayoutConstants.ARENA_BRICK_ROW_COUNT + 1)) /
+      MazeGameLayoutConstants.ARENA_BRICK_ROW_COUNT,
+  );
   const brickHeight = Math.max(1, rowHeight);
 
   context.fillStyle = mortar;
@@ -48,19 +48,22 @@ export function createBrickWallPattern(tileSizeView: number, wallColor: Color, s
     context.fillStyle = brick;
     context.fillRect(x, y, width, height);
     context.fillStyle = shaded ? shade : highlight;
-    context.fillRect(x, y, width, Math.max(1, Math.floor(height * 0.22)));
+    context.fillRect(x, y, width, Math.max(1, Math.floor(height * MazeGameLayoutConstants.ARENA_BRICK_TOP_BAND_RATIO)));
     context.fillStyle = shaded ? highlight : shade;
     context.fillRect(
       x,
-      y + height - Math.max(1, Math.floor(height * 0.12)),
+      y + height - Math.max(1, Math.floor(height * MazeGameLayoutConstants.ARENA_BRICK_BOTTOM_BAND_RATIO)),
       width,
-      Math.max(1, Math.floor(height * 0.12)),
+      Math.max(1, Math.floor(height * MazeGameLayoutConstants.ARENA_BRICK_BOTTOM_BAND_RATIO)),
     );
   };
 
   let rowY = mortarWidth;
-  for (let row = 0; row < BRICK_ROW_COUNT; row++) {
-    const offset = row % 2 === 0 ? mortarWidth : mortarWidth + Math.floor(unit * 0.22);
+  for (let row = 0; row < MazeGameLayoutConstants.ARENA_BRICK_ROW_COUNT; row++) {
+    const offset =
+      row % 2 === 0
+        ? mortarWidth
+        : mortarWidth + Math.floor(unit * MazeGameLayoutConstants.ARENA_BRICK_ROW_OFFSET_RATIO);
     const brickWidth = Math.floor((unit - offset - mortarWidth) / 2);
     drawBrick(offset, rowY, Math.max(1, brickWidth), brickHeight, row === 1);
     const secondX = offset + brickWidth + mortarWidth;
@@ -80,22 +83,35 @@ export function createBrickWallPattern(tileSizeView: number, wallColor: Color, s
  * Glossy sphere fill for the player particle (theme-aware via color properties).
  */
 export function createParticleRadialFill(radiusView: number): RadialGradient {
-  const highlightOffset = radiusView * 0.28;
+  const highlightOffset = radiusView * MazeGameLayoutConstants.ARENA_PARTICLE_RADIAL_HIGHLIGHT_OFFSET_RATIO;
   return new RadialGradient(-highlightOffset, -highlightOffset, 0, 0, 0, radiusView)
-    .addColorStop(0, MazeGameColors.particleHighlightColorProperty)
-    .addColorStop(0.35, MazeGameColors.particleColorProperty)
-    .addColorStop(0.85, MazeGameColors.particleShadeColorProperty)
-    .addColorStop(1, MazeGameColors.particleStrokeColorProperty);
+    .addColorStop(
+      MazeGameLayoutConstants.ARENA_PARTICLE_RADIAL_STOP_HIGHLIGHT,
+      MazeGameColors.particleHighlightColorProperty,
+    )
+    .addColorStop(MazeGameLayoutConstants.ARENA_PARTICLE_RADIAL_STOP_BODY, MazeGameColors.particleColorProperty)
+    .addColorStop(MazeGameLayoutConstants.ARENA_PARTICLE_RADIAL_STOP_SHADE, MazeGameColors.particleShadeColorProperty)
+    .addColorStop(
+      MazeGameLayoutConstants.ARENA_PARTICLE_RADIAL_STOP_STROKE,
+      MazeGameColors.particleStrokeColorProperty,
+    );
 }
 
 /**
  * Soft outer glow behind the particle.
  */
 export function createParticleGlowFill(radiusView: number): RadialGradient {
-  const glowRadius = radiusView * 1.45;
-  return new RadialGradient(0, 0, radiusView * 0.2, 0, 0, glowRadius)
+  const glowRadius = radiusView * MazeGameLayoutConstants.ARENA_PARTICLE_GLOW_GRADIENT_OUTER_RATIO;
+  return new RadialGradient(
+    0,
+    0,
+    radiusView * MazeGameLayoutConstants.ARENA_PARTICLE_GLOW_GRADIENT_INNER_RATIO,
+    0,
+    0,
+    glowRadius,
+  )
     .addColorStop(0, MazeGameColors.particleGlowColorProperty)
-    .addColorStop(1, "rgba(0,0,0,0)");
+    .addColorStop(1, TRANSPARENT_COLOR);
 }
 
 export type ParticleVisualNodes = {
@@ -109,19 +125,19 @@ export type ParticleVisualNodes = {
  * Layered circles: glow, shaded body, and specular highlight.
  */
 export function createParticleVisual(radiusView: number): ParticleVisualNodes {
-  const glow = new Circle(radiusView * 1.35, {
+  const glow = new Circle(radiusView * MazeGameLayoutConstants.ARENA_PARTICLE_GLOW_RADIUS_RATIO, {
     fill: createParticleGlowFill(radiusView),
     pickable: false,
   });
   const body = new Circle(radiusView, {
     fill: createParticleRadialFill(radiusView),
     stroke: MazeGameColors.particleStrokeColorProperty,
-    lineWidth: Math.max(1, radiusView * 0.08),
+    lineWidth: Math.max(1, radiusView * MazeGameLayoutConstants.ARENA_PARTICLE_BODY_STROKE_RATIO),
   });
-  const specular = new Circle(radiusView * 0.22, {
+  const specular = new Circle(radiusView * MazeGameLayoutConstants.ARENA_PARTICLE_SPECULAR_RADIUS_RATIO, {
     fill: MazeGameColors.particleSpecularColorProperty,
-    centerX: -radiusView * 0.28,
-    centerY: -radiusView * 0.32,
+    centerX: -radiusView * MazeGameLayoutConstants.ARENA_PARTICLE_SPECULAR_OFFSET_X_RATIO,
+    centerY: -radiusView * MazeGameLayoutConstants.ARENA_PARTICLE_SPECULAR_OFFSET_Y_RATIO,
     pickable: false,
   });
   const root = new Node({ children: [glow, body, specular] });
@@ -134,7 +150,7 @@ export function createParticleVisual(radiusView: number): ParticleVisualNodes {
 export function createGoalOverlayNode(tileSizeView: number): Node {
   const size = tileSizeView;
   const center = size / 2;
-  const ringStroke = Math.max(1, size * 0.04);
+  const ringStroke = Math.max(1, size * MazeGameLayoutConstants.ARENA_GOAL_RING_STROKE_RATIO);
 
   const rings = new Path(null, {
     stroke: MazeGameColors.goalMarkerColorProperty,
@@ -142,30 +158,37 @@ export function createGoalOverlayNode(tileSizeView: number): Node {
     pickable: false,
   });
   const ringShape = new Shape();
-  const ringRadii = [size * 0.42, size * 0.28, size * 0.14];
-  for (const radius of ringRadii) {
-    ringShape.circle(center, center, radius);
+  for (const radiusRatio of MazeGameLayoutConstants.ARENA_GOAL_RING_RADIUS_RATIOS) {
+    ringShape.circle(center, center, size * radiusRatio);
   }
   rings.shape = ringShape;
 
-  const starRadius = size * 0.2;
-  const star = new Path(new StarShape({ outerRadius: starRadius, innerRadius: starRadius * 0.45 }), {
-    fill: MazeGameColors.goalStarFillColorProperty,
-    stroke: MazeGameColors.goalMarkerColorProperty,
-    lineWidth: Math.max(1, size * 0.03),
-    pickable: false,
-  });
+  const starRadius = size * MazeGameLayoutConstants.ARENA_GOAL_STAR_RADIUS_RATIO;
+  const star = new Path(
+    new StarShape({
+      outerRadius: starRadius,
+      innerRadius: starRadius * MazeGameLayoutConstants.ARENA_GOAL_STAR_INNER_RADIUS_RATIO,
+    }),
+    {
+      fill: MazeGameColors.goalStarFillColorProperty,
+      stroke: MazeGameColors.goalMarkerColorProperty,
+      lineWidth: Math.max(1, size * MazeGameLayoutConstants.ARENA_GOAL_STAR_STROKE_RATIO),
+      pickable: false,
+    },
+  );
   star.center = new Vector2(center, center);
 
-  const stripeWidth = Math.max(1, size * 0.07);
+  const stripeWidth = Math.max(1, size * MazeGameLayoutConstants.ARENA_GOAL_STRIPE_WIDTH_RATIO);
+  const [stripeStartX1, stripeStartX2] = MazeGameLayoutConstants.ARENA_GOAL_STRIPE_START_X_RATIOS;
+  const [stripeEndX1, stripeEndX2] = MazeGameLayoutConstants.ARENA_GOAL_STRIPE_END_X_RATIOS;
   const stripes = new Path(
     new Shape()
       .moveTo(0, size)
       .lineTo(size, 0)
-      .moveTo(-size * 0.35, size)
-      .lineTo(size * 0.65, 0)
-      .moveTo(size * 0.35, size)
-      .lineTo(size * 1.35, 0),
+      .moveTo(size * stripeStartX1, size)
+      .lineTo(size * stripeEndX1, 0)
+      .moveTo(size * stripeStartX2, size)
+      .lineTo(size * stripeEndX2, 0),
     {
       stroke: MazeGameColors.goalStripeColorProperty,
       lineWidth: stripeWidth,

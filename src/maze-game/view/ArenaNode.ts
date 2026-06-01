@@ -17,7 +17,7 @@ import type { SceneryEvent } from "scenerystack/scenery";
 import { Circle, type Color, DragListener, LinearGradient, Node, Path, Rectangle, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { StringManager } from "../../i18n/StringManager.js";
-import MazeGameColors from "../../MazeGameColors.js";
+import MazeGameColors, { TRANSPARENT_COLOR } from "../../MazeGameColors.js";
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 import { particleTraceEnabledProperty } from "../MazeGamePreferences.js";
 import { ControlMode } from "../model/ControlMode.js";
@@ -97,7 +97,7 @@ export default class ArenaNode extends Node {
     finishSheen.setRect(finishX, finishY, tileSize, tileSize);
     finishSheen.fill = new LinearGradient(0, 0, tileSize, tileSize)
       .addColorStop(0, MazeGameColors.goalTileSheenColorProperty)
-      .addColorStop(0.55, "rgba(0,0,0,0)")
+      .addColorStop(MazeGameLayoutConstants.ARENA_GOAL_SHEEN_FADE_STOP, TRANSPARENT_COLOR)
       .addColorStop(1, MazeGameColors.goalTileSheenColorProperty);
     finishOverlay.translation = new Vector2(finishX, finishY);
     finishOverlay.removeAllChildren();
@@ -120,12 +120,19 @@ export default class ArenaNode extends Node {
     const touchRadius = Math.max(particleRadiusView, MazeGameConstants.PARTICLE_MIN_TOUCH_RADIUS_VIEW);
     this.particleVisual.body.setRadius(particleRadiusView);
     this.particleVisual.body.fill = createParticleRadialFill(particleRadiusView);
-    this.particleVisual.body.lineWidth = Math.max(1, particleRadiusView * 0.08);
-    this.particleVisual.glow.setRadius(particleRadiusView * 1.35);
+    this.particleVisual.body.lineWidth = Math.max(
+      1,
+      particleRadiusView * MazeGameLayoutConstants.ARENA_PARTICLE_BODY_STROKE_RATIO,
+    );
+    this.particleVisual.glow.setRadius(particleRadiusView * MazeGameLayoutConstants.ARENA_PARTICLE_GLOW_RADIUS_RATIO);
     this.particleVisual.glow.fill = createParticleGlowFill(particleRadiusView);
-    this.particleVisual.specular.setRadius(particleRadiusView * 0.22);
-    this.particleVisual.specular.centerX = -particleRadiusView * 0.28;
-    this.particleVisual.specular.centerY = -particleRadiusView * 0.32;
+    this.particleVisual.specular.setRadius(
+      particleRadiusView * MazeGameLayoutConstants.ARENA_PARTICLE_SPECULAR_RADIUS_RATIO,
+    );
+    this.particleVisual.specular.centerX =
+      -particleRadiusView * MazeGameLayoutConstants.ARENA_PARTICLE_SPECULAR_OFFSET_X_RATIO;
+    this.particleVisual.specular.centerY =
+      -particleRadiusView * MazeGameLayoutConstants.ARENA_PARTICLE_SPECULAR_OFFSET_Y_RATIO;
     this.particleVisual.body.mouseArea = Shape.circle(0, 0, particleRadiusView);
     this.particleVisual.body.touchArea = Shape.circle(0, 0, touchRadius);
     this.syncParticlePosition(this.modelRef.particle.position);
@@ -232,7 +239,7 @@ export default class ArenaNode extends Node {
     this.addChild(finishTile);
 
     this.finishSheen = new Rectangle(0, 0, 0, 0, {
-      fill: "rgba(255,255,255,0)",
+      fill: TRANSPARENT_COLOR,
       cornerRadius: MazeGameLayoutConstants.ARENA_GOAL_CORNER_RADIUS,
       pickable: false,
     });
@@ -279,7 +286,10 @@ export default class ArenaNode extends Node {
     this.addChild(this.winRing);
 
     this.goalText = new Text(stringManager.getHudStrings().wonStringProperty, {
-      font: new PhetFont({ size: MazeGameLayoutConstants.ARENA_GOAL_FONT_SIZE, weight: "bold" }),
+      font: new PhetFont({
+        size: MazeGameLayoutConstants.ARENA_GOAL_FONT_SIZE,
+        weight: MazeGameLayoutConstants.FONT_WEIGHT_BOLD,
+      }),
       fill: MazeGameColors.finishWonColorProperty,
       stroke: MazeGameColors.wallShadowColorProperty,
       lineWidth: MazeGameLayoutConstants.ARENA_WALL_LINE_WIDTH,

@@ -42,30 +42,17 @@ import MazeGameInfoDialog from "./MazeGameInfoDialog.js";
 
 type MazeGameScreenViewOptions = ScreenViewOptions & { tandem: Tandem };
 
-const KEYS = ["arrowLeft", "arrowRight", "arrowUp", "arrowDown", "a", "d", "w", "s", "space"] as const;
-
-const AXIS_BY_KEY = {
-  arrowLeft: [-1, 0],
-  a: [-1, 0],
-  arrowRight: [1, 0],
-  d: [1, 0],
-  arrowUp: [0, -1],
-  w: [0, -1],
-  arrowDown: [0, 1],
-  s: [0, 1],
-} as const;
-
-type AxisKey = keyof typeof AXIS_BY_KEY;
+type AxisKey = keyof typeof MazeGameConstants.KEYBOARD_AXIS_BY_KEY;
 
 function isAxisKey(key: string): key is AxisKey {
-  return key in AXIS_BY_KEY;
+  return key in MazeGameConstants.KEYBOARD_AXIS_BY_KEY;
 }
 
 function axisForKey(key: string): readonly [number, number] | null {
   if (!isAxisKey(key)) {
     return null;
   }
-  return AXIS_BY_KEY[key];
+  return MazeGameConstants.KEYBOARD_AXIS_BY_KEY[key];
 }
 
 type ArenaLayout = {
@@ -222,7 +209,7 @@ export class MazeGameScreenView extends ScreenView {
     this.applyLayout();
 
     this.keyboardListener = KeyboardListener.createGlobal(this, {
-      keys: [...KEYS],
+      keys: [...MazeGameConstants.KEYBOARD_KEYS],
       fireOnHold: true,
       fire: (_event: KeyboardEvent | null, keysPressed: string): void => {
         if (model.wonProperty.value) {
@@ -232,7 +219,7 @@ export class MazeGameScreenView extends ScreenView {
         const activeKeys = keysPressed.split("+");
         const mode = model.controlModeProperty.value;
 
-        if (activeKeys.includes("space")) {
+        if (activeKeys.includes(MazeGameConstants.KEYBOARD_STOP_KEY)) {
           if (mode === ControlMode.VELOCITY) {
             model.particle.setVelocityXY(0, 0);
           } else if (mode === ControlMode.ACCELERATION) {
@@ -268,15 +255,19 @@ export class MazeGameScreenView extends ScreenView {
       },
     });
 
-    this.collisionSound = new SoundClip(wallContact_mp3, { initialOutputLevel: 0.5 });
+    this.collisionSound = new SoundClip(wallContact_mp3, {
+      initialOutputLevel: MazeGameConstants.SOUND_COLLISION_OUTPUT_LEVEL,
+    });
     soundManager.addSoundGenerator(this.collisionSound);
     model.collisionsProperty.link(this.playCollisionSound, { disposer: this });
 
-    this.winSound = new SoundClip(collect_mp3, { initialOutputLevel: 0.7 });
+    this.winSound = new SoundClip(collect_mp3, { initialOutputLevel: MazeGameConstants.SOUND_WIN_OUTPUT_LEVEL });
     soundManager.addSoundGenerator(this.winSound);
     model.wonProperty.link(this.playWinSound, { disposer: this });
 
-    this.modeSound = new SoundClip(selectionArpeggio001_mp3, { initialOutputLevel: 0.3 });
+    this.modeSound = new SoundClip(selectionArpeggio001_mp3, {
+      initialOutputLevel: MazeGameConstants.SOUND_MODE_OUTPUT_LEVEL,
+    });
     soundManager.addSoundGenerator(this.modeSound);
     model.controlModeProperty.lazyLink(this.playModeSound, { disposer: this });
   }

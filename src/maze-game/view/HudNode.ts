@@ -77,7 +77,10 @@ export default class HudNode extends Panel {
       spacing: MazeGameLayoutConstants.HUD_HBOX_SPACING,
       children: [
         new Text(strings.collisionMultiplierStringProperty, {
-          font: new PhetFont({ size: MazeGameLayoutConstants.HUD_COLLISION_MARKER_FONT_SIZE, weight: "bold" }),
+          font: new PhetFont({
+            size: MazeGameLayoutConstants.HUD_COLLISION_MARKER_FONT_SIZE,
+            weight: MazeGameLayoutConstants.FONT_WEIGHT_BOLD,
+          }),
           fill: MazeGameColors.foregroundColorProperty,
         }),
         collisionsDisplay,
@@ -85,7 +88,10 @@ export default class HudNode extends Panel {
     });
 
     const collisionWarning = new Text(strings.collisionWarningStringProperty, {
-      font: new PhetFont({ size: MazeGameLayoutConstants.HUD_WARNING_FONT_SIZE, weight: "bold" }),
+      font: new PhetFont({
+        size: MazeGameLayoutConstants.HUD_WARNING_FONT_SIZE,
+        weight: MazeGameLayoutConstants.FONT_WEIGHT_BOLD,
+      }),
       fill: MazeGameColors.collisionWarningColorProperty,
       maxWidth: MazeGameConstants.HUD_WARNING_MAX_WIDTH,
       visible: false,

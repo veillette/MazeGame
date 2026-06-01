@@ -19,6 +19,9 @@ const PANEL_FILL_LIGHT = new Color(240, 240, 240);
 const PANEL_STROKE_DARK = "rgba(255, 255, 255, 0.4)";
 const PANEL_STROKE_LIGHT = "rgba(0, 0, 0, 0.4)";
 
+/** Fully transparent fill/stop used for gradient fades and placeholder rectangles. */
+export const TRANSPARENT_COLOR = "rgba(0,0,0,0)";
+
 const MazeGameColors = {
   // Screen background.
   backgroundColorProperty: profileColor("background", "#1a1a2e", WHITE),

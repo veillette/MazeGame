@@ -41,6 +41,25 @@ const MazeGameConstants = {
   KEYBOARD_VELOCITY_MAGNITUDE: 4,
   KEYBOARD_ACCELERATION_MAGNITUDE: 1,
 
+  // Keyboard keys wired through KeyboardListener in MazeGameScreenView.
+  KEYBOARD_STOP_KEY: "space",
+  KEYBOARD_KEYS: ["arrowLeft", "arrowRight", "arrowUp", "arrowDown", "a", "d", "w", "s", "space"] as const,
+  KEYBOARD_AXIS_BY_KEY: {
+    arrowLeft: [-1, 0],
+    a: [-1, 0],
+    arrowRight: [1, 0],
+    d: [1, 0],
+    arrowUp: [0, -1],
+    w: [0, -1],
+    arrowDown: [0, 1],
+    s: [0, 1],
+  } as const,
+
+  // SoundClip output levels (0–1).
+  SOUND_COLLISION_OUTPUT_LEVEL: 0.5,
+  SOUND_WIN_OUTPUT_LEVEL: 0.7,
+  SOUND_MODE_OUTPUT_LEVEL: 0.3,
+
   // Side length (px) of the square drag-pad inside the control panel.
   REMOTE_PAD_SIZE: 160,
 

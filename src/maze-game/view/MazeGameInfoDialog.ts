@@ -20,7 +20,10 @@ type MazeGameInfoDialogSelfOptions = {
 type MazeGameInfoDialogOptions = MazeGameInfoDialogSelfOptions & DialogOptions;
 
 const DESCRIPTION_FONT = new PhetFont({ size: MazeGameLayoutConstants.INFO_DIALOG_FONT_SIZE });
-const TITLE_FONT = new PhetFont({ size: MazeGameLayoutConstants.INFO_DIALOG_TITLE_FONT_SIZE, weight: "bold" });
+const TITLE_FONT = new PhetFont({
+  size: MazeGameLayoutConstants.INFO_DIALOG_TITLE_FONT_SIZE,
+  weight: MazeGameLayoutConstants.FONT_WEIGHT_BOLD,
+});
 const MAX_CONTENT_WIDTH =
   MazeGameLayoutConstants.INFO_DIALOG_MAX_CONTENT_WIDTH_FRACTION * ScreenView.DEFAULT_LAYOUT_BOUNDS.width;
 

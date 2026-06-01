@@ -79,7 +79,7 @@ export default class ControlPanel extends Panel {
 
     const titleFont = new PhetFont({
       size: MazeGameLayoutConstants.CONTROL_PANEL_TITLE_FONT_SIZE,
-      weight: "bold",
+      weight: MazeGameLayoutConstants.FONT_WEIGHT_BOLD,
     });
     const tabFont = new PhetFont(MazeGameLayoutConstants.CONTROL_PANEL_TAB_FONT_SIZE);
 

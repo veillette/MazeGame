@@ -20,7 +20,7 @@ import type { MazeGameModel } from "../model/MazeGameModel.js";
 
 const TITLE_FONT = new PhetFont({
   size: MazeGameLayoutConstants.LEVEL_SELECTOR_TITLE_FONT_SIZE,
-  weight: "bold",
+  weight: MazeGameLayoutConstants.FONT_WEIGHT_BOLD,
 });
 const LABEL_FONT = new PhetFont(MazeGameLayoutConstants.LEVEL_SELECTOR_LABEL_FONT_SIZE);
 

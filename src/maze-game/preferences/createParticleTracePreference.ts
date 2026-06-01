@@ -19,7 +19,10 @@ export const createParticleTracePreference = (parentTandem: Tandem): HBox => {
   const strings = StringManager.getInstance().getPreferencesStrings();
 
   const label = new Text(strings.particleTraceStringProperty, {
-    font: new PhetFont({ size: MazeGameLayoutConstants.PREFERENCES_LABEL_FONT_SIZE, weight: "bold" }),
+    font: new PhetFont({
+      size: MazeGameLayoutConstants.PREFERENCES_LABEL_FONT_SIZE,
+      weight: MazeGameLayoutConstants.FONT_WEIGHT_BOLD,
+    }),
     maxWidth: MazeGameLayoutConstants.PREFERENCES_LABEL_MAX_WIDTH,
   });
 
