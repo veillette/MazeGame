@@ -10,46 +10,66 @@
  * available.
  */
 
-import { BooleanProperty } from "scenerystack/axon";
+import { BooleanProperty, type ReadOnlyProperty } from "scenerystack/axon";
 import { Vector2, Vector2Property } from "scenerystack/dot";
 import MazeGameConstants from "./MazeGameConstants.js";
 
 export default class Particle {
-  public readonly positionProperty = new Vector2Property(new Vector2(0, 0));
-  public readonly velocityProperty = new Vector2Property(new Vector2(0, 0));
-  public readonly accelerationProperty = new Vector2Property(new Vector2(0, 0));
-  public readonly collidingProperty = new BooleanProperty(false);
+  private readonly positionPropertyImpl = new Vector2Property(new Vector2(0, 0));
+  private readonly velocityPropertyImpl = new Vector2Property(new Vector2(0, 0));
+  private readonly accelerationPropertyImpl = new Vector2Property(new Vector2(0, 0));
+  private readonly collidingPropertyImpl = new BooleanProperty(false);
+
+  public get positionProperty(): ReadOnlyProperty<Vector2> {
+    return this.positionPropertyImpl;
+  }
+
+  public get velocityProperty(): ReadOnlyProperty<Vector2> {
+    return this.velocityPropertyImpl;
+  }
+
+  public get accelerationProperty(): ReadOnlyProperty<Vector2> {
+    return this.accelerationPropertyImpl;
+  }
+
+  public get collidingProperty(): ReadOnlyProperty<boolean> {
+    return this.collidingPropertyImpl;
+  }
 
   public readonly radius = MazeGameConstants.PARTICLE_RADIUS;
 
   public get position(): Vector2 {
-    return this.positionProperty.value;
+    return this.positionPropertyImpl.value;
   }
 
   public get velocity(): Vector2 {
-    return this.velocityProperty.value;
+    return this.velocityPropertyImpl.value;
   }
 
   public get acceleration(): Vector2 {
-    return this.accelerationProperty.value;
+    return this.accelerationPropertyImpl.value;
   }
 
   public setPositionXY(x: number, y: number): void {
-    this.positionProperty.value = new Vector2(x, y);
+    this.positionPropertyImpl.value = new Vector2(x, y);
   }
 
   public setVelocityXY(x: number, y: number): void {
-    this.velocityProperty.value = new Vector2(x, y);
+    this.velocityPropertyImpl.value = new Vector2(x, y);
   }
 
   public setAccelerationXY(x: number, y: number): void {
-    this.accelerationProperty.value = new Vector2(x, y);
+    this.accelerationPropertyImpl.value = new Vector2(x, y);
+  }
+
+  public setColliding(value: boolean): void {
+    this.collidingPropertyImpl.value = value;
   }
 
   public reset(): void {
-    this.positionProperty.reset();
-    this.velocityProperty.reset();
-    this.accelerationProperty.reset();
-    this.collidingProperty.reset();
+    this.positionPropertyImpl.reset();
+    this.velocityPropertyImpl.reset();
+    this.accelerationPropertyImpl.reset();
+    this.collidingPropertyImpl.reset();
   }
 }

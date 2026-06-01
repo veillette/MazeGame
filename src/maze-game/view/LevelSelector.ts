@@ -2,12 +2,14 @@
  * LevelSelector.ts
  *
  * Lets the user pick one of the four built-in mazes via a vertical radio
- * group bound directly to the model's levelNameProperty.
+ * group bound to a local bridge Property synced with the model.
  */
 
+import { Property } from "scenerystack/axon";
+import { optionize } from "scenerystack/phet-core";
 import { Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
-import { AquaRadioButtonGroup, Panel } from "scenerystack/sun";
+import { AquaRadioButtonGroup, Panel, type PanelOptions } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
@@ -21,13 +23,33 @@ const RADIO_BUTTON_RADIUS = 7;
 const RADIO_BUTTON_SPACING = 4;
 const VBOX_SPACING = 6;
 
-type LevelSelectorOptions = {
+type LevelSelectorSelfOptions = {
   tandem?: Tandem;
 };
 
+type LevelSelectorOptions = LevelSelectorSelfOptions & PanelOptions;
+
 export default class LevelSelector extends Panel {
-  public constructor(model: MazeGameModel, options: LevelSelectorOptions = {}) {
+  private readonly levelNameBridgeProperty: Property<LevelKey>;
+
+  public constructor(model: MazeGameModel, providedOptions?: LevelSelectorOptions) {
     const strings = StringManager.getInstance().getLevelStrings();
+
+    const options = optionize<LevelSelectorOptions, LevelSelectorSelfOptions, PanelOptions>()(
+      {
+        tandem: Tandem.OPT_OUT,
+        fill: MazeGameColors.panelFillProperty,
+        stroke: MazeGameColors.panelStrokeProperty,
+        cornerRadius: MazeGameConstants.PANEL_CORNER_RADIUS,
+        xMargin: MazeGameConstants.PANEL_X_MARGIN,
+        yMargin: MazeGameConstants.PANEL_Y_MARGIN,
+        align: "left",
+        accessibleName: strings.titleStringProperty,
+      },
+      providedOptions,
+    );
+
+    const levelNameBridgeProperty = new Property<LevelKey>(model.levelNameProperty.value);
 
     const labelByKey: Record<LevelKey, () => Text> = {
       [LevelKey.PRACTICE]: () =>
@@ -43,13 +65,21 @@ export default class LevelSelector extends Panel {
         }),
     };
 
+    const { tandem, ...panelOptions } = options;
+
     const radioGroup = new AquaRadioButtonGroup<LevelKey>(
-      model.levelNameProperty,
+      levelNameBridgeProperty,
       LEVEL_KEYS.map((key) => ({ value: key, createNode: labelByKey[key] })),
       {
         spacing: RADIO_BUTTON_SPACING,
-        radioButtonOptions: { radius: RADIO_BUTTON_RADIUS, stroke: MazeGameColors.foregroundColorProperty },
-        tandem: options.tandem ?? Tandem.OPT_OUT,
+        radioButtonOptions: {
+          radius: RADIO_BUTTON_RADIUS,
+          stroke: MazeGameColors.foregroundColorProperty,
+          selectedColor: MazeGameColors.levelButtonSelectedColorProperty,
+          deselectedColor: MazeGameColors.levelButtonUnselectedColorProperty,
+          centerColor: MazeGameColors.foregroundColorProperty,
+        },
+        tandem,
       },
     );
 
@@ -60,15 +90,32 @@ export default class LevelSelector extends Panel {
 
     const content = new VBox({ align: "left", spacing: VBOX_SPACING, children: [title, radioGroup] });
 
-    super(content, {
-      fill: MazeGameColors.panelFillProperty,
-      stroke: MazeGameColors.panelStrokeProperty,
-      cornerRadius: MazeGameConstants.PANEL_CORNER_RADIUS,
-      xMargin: MazeGameConstants.PANEL_X_MARGIN,
-      yMargin: MazeGameConstants.PANEL_Y_MARGIN,
-      align: "left",
-      accessibleName: strings.titleStringProperty,
-    });
+    super(content, panelOptions);
     radioGroup.accessibleName = strings.titleStringProperty;
+
+    this.levelNameBridgeProperty = levelNameBridgeProperty;
+
+    model.levelNameProperty.link(
+      (levelKey): void => {
+        if (levelNameBridgeProperty.value !== levelKey) {
+          levelNameBridgeProperty.value = levelKey;
+        }
+      },
+      { disposer: this },
+    );
+
+    levelNameBridgeProperty.link(
+      (levelKey): void => {
+        if (model.levelNameProperty.value !== levelKey) {
+          model.changeLevel(levelKey);
+        }
+      },
+      { disposer: this },
+    );
+  }
+
+  public override dispose(): void {
+    this.levelNameBridgeProperty.dispose();
+    super.dispose();
   }
 }

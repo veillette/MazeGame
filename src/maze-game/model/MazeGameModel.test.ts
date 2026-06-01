@@ -14,7 +14,7 @@ describe("MazeGameModel", () => {
   it("increments collisions only on false-to-true wall contact", () => {
     const model = new MazeGameModel();
     model.changeLevel(LevelKey.LEVEL_1);
-    model.controlModeProperty.value = ControlMode.POSITION;
+    model.setControlMode(ControlMode.POSITION);
     const level = model.levelProperty.value;
     const { x: wallX, y } = level.tileCenter(LEVEL1_WALL_COL, LEVEL1_WALL_ROW);
     model.particle.setPositionXY(wallX, y);
@@ -33,7 +33,7 @@ describe("MazeGameModel", () => {
   it("does not win after a collision even at finish", () => {
     const model = new MazeGameModel();
     model.changeLevel(LevelKey.LEVEL_1);
-    model.controlModeProperty.value = ControlMode.POSITION;
+    model.setControlMode(ControlMode.POSITION);
     const level = model.levelProperty.value;
     const { x: wallX, y: wallY } = level.tileCenter(LEVEL1_WALL_COL, LEVEL1_WALL_ROW);
     model.particle.setPositionXY(wallX, wallY);
@@ -50,7 +50,7 @@ describe("MazeGameModel", () => {
 
   it("wins with zero collisions when touching finish", () => {
     const model = new MazeGameModel();
-    model.controlModeProperty.value = ControlMode.POSITION;
+    model.setControlMode(ControlMode.POSITION);
     const finish = model.levelProperty.value.finishPosition();
     const center = model.levelProperty.value.tileCenter(finish.col, finish.row);
     model.particle.setPositionXY(center.x, center.y);
@@ -61,7 +61,7 @@ describe("MazeGameModel", () => {
   it("does not tunnel into a wall under sustained acceleration", () => {
     const model = new MazeGameModel();
     model.changeLevel(LevelKey.LEVEL_1);
-    model.controlModeProperty.value = ControlMode.ACCELERATION;
+    model.setControlMode(ControlMode.ACCELERATION);
     const level = model.levelProperty.value;
     const { x: wallX, y } = level.tileCenter(LEVEL1_WALL_COL, LEVEL1_WALL_ROW);
     const approachX = wallX - MazeGameConstants.TILE_SIZE * 0.6;
@@ -80,7 +80,7 @@ describe("MazeGameModel", () => {
   it("holds position when already overlapping a wall in acceleration mode", () => {
     const model = new MazeGameModel();
     model.changeLevel(LevelKey.LEVEL_1);
-    model.controlModeProperty.value = ControlMode.ACCELERATION;
+    model.setControlMode(ControlMode.ACCELERATION);
     const level = model.levelProperty.value;
     const { x: wallX, y } = level.tileCenter(LEVEL1_WALL_COL, LEVEL1_WALL_ROW);
     model.particle.setPositionXY(wallX, y);

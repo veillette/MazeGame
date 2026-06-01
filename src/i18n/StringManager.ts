@@ -22,6 +22,42 @@ const stringProperties = LocalizedString.getNestedStringProperties({
   fr: stringsFr,
 });
 
+export type ControlModeStrings = {
+  readonly titleStringProperty: ReadOnlyProperty<string>;
+  readonly positionStringProperty: ReadOnlyProperty<string>;
+  readonly velocityStringProperty: ReadOnlyProperty<string>;
+  readonly accelerationStringProperty: ReadOnlyProperty<string>;
+  readonly positionShortStringProperty: ReadOnlyProperty<string>;
+  readonly velocityShortStringProperty: ReadOnlyProperty<string>;
+  readonly accelerationShortStringProperty: ReadOnlyProperty<string>;
+};
+
+export type LevelStrings = {
+  readonly titleStringProperty: ReadOnlyProperty<string>;
+  readonly practiceStringProperty: ReadOnlyProperty<string>;
+  readonly level1StringProperty: ReadOnlyProperty<string>;
+  readonly level2StringProperty: ReadOnlyProperty<string>;
+  readonly certainDeathStringProperty: ReadOnlyProperty<string>;
+};
+
+export type HudStrings = {
+  readonly collisionMultiplierStringProperty: ReadOnlyProperty<string>;
+  readonly wonStringProperty: ReadOnlyProperty<string>;
+  readonly resetLevelStringProperty: ReadOnlyProperty<string>;
+  readonly collisionWarningStringProperty: ReadOnlyProperty<string>;
+  readonly nextLevelStringProperty: ReadOnlyProperty<string>;
+  readonly resetAllStringProperty: ReadOnlyProperty<string>;
+};
+
+export type A11yStrings = {
+  readonly controlPadStringProperty: ReadOnlyProperty<string>;
+  readonly particleStringProperty: ReadOnlyProperty<string>;
+  readonly timeDisplayStringProperty: ReadOnlyProperty<string>;
+  readonly collisionsDisplayStringProperty: ReadOnlyProperty<string>;
+  readonly hudPanelStringProperty: ReadOnlyProperty<string>;
+  readonly levelCompleteStringProperty: ReadOnlyProperty<string>;
+};
+
 export class StringManager {
   private static instance: StringManager | null = null;
 
@@ -47,19 +83,19 @@ export class StringManager {
     };
   }
 
-  public getControlModeStrings(): typeof stringProperties.controlMode {
+  public getControlModeStrings(): ControlModeStrings {
     return stringProperties.controlMode;
   }
 
-  public getLevelStrings(): typeof stringProperties.levels {
+  public getLevelStrings(): LevelStrings {
     return stringProperties.levels;
   }
 
-  public getHudStrings(): typeof stringProperties.hud {
+  public getHudStrings(): HudStrings {
     return stringProperties.hud;
   }
 
-  public getA11yStrings(): typeof stringProperties.a11y {
+  public getA11yStrings(): A11yStrings {
     return stringProperties.a11y;
   }
 }

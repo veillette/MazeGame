@@ -5,6 +5,7 @@
  * factories together and passes screen options (name, background color,
  * tandem) through to the parent Screen class.
  */
+import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import { Screen, type ScreenOptions } from "scenerystack/sim";
 import type { Tandem } from "scenerystack/tandem";
 import MazeGameColors from "../MazeGameColors.js";
@@ -18,10 +19,12 @@ export class MazeGameScreen extends Screen<MazeGameModel, MazeGameScreenView> {
     super(
       () => new MazeGameModel(),
       (model) => new MazeGameScreenView(model, { tandem: options.tandem.createTandem("view") }),
-      {
-        backgroundColorProperty: MazeGameColors.backgroundColorProperty,
-        ...options,
-      },
+      optionize<MazeGameScreenOptions, EmptySelfOptions, ScreenOptions>()(
+        {
+          backgroundColorProperty: MazeGameColors.backgroundColorProperty,
+        },
+        options,
+      ),
     );
   }
 }

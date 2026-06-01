@@ -20,6 +20,7 @@
  */
 
 import { Bounds2, Vector2 } from "scenerystack/dot";
+import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import { ModelViewTransform2 } from "scenerystack/phetcommon";
 import { KeyboardListener } from "scenerystack/scenery";
 import { ResetAllButton } from "scenerystack/scenery-phet";
@@ -27,6 +28,7 @@ import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import { collect_mp3, SoundClip, selectionArpeggio001_mp3, soundManager, wallContact_mp3 } from "scenerystack/tambo";
 import type { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
+import MazeGameColors from "../../MazeGameColors.js";
 import { ControlMode } from "../model/ControlMode.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
 import type { MazeGameModel } from "../model/MazeGameModel.js";
@@ -70,6 +72,7 @@ function axisForKey(key: string): readonly [number, number] | null {
 export class MazeGameScreenView extends ScreenView {
   private readonly arenaNode: ArenaNode;
   private readonly controlPanel: ControlPanel;
+  private readonly levelSelector: LevelSelector;
   private readonly hudNode: HudNode;
   private readonly keyboardListener: ReturnType<typeof KeyboardListener.createGlobal>;
   private readonly collisionSound: SoundClip;
@@ -93,7 +96,8 @@ export class MazeGameScreenView extends ScreenView {
   };
 
   public constructor(model: MazeGameModel, providedOptions: MazeGameScreenViewOptions) {
-    super(providedOptions);
+    const options = optionize<MazeGameScreenViewOptions, EmptySelfOptions, ScreenViewOptions>()({}, providedOptions);
+    super(options);
 
     const layoutBounds = this.layoutBounds;
 
@@ -129,19 +133,20 @@ export class MazeGameScreenView extends ScreenView {
     this.controlPanel.right = layoutBounds.maxX - MARGIN;
     this.controlPanel.top = MARGIN;
 
-    const levelSelector = new LevelSelector(model, {
-      tandem: providedOptions.tandem.createTandem("levelSelector"),
+    this.levelSelector = new LevelSelector(model, {
+      tandem: options.tandem.createTandem("levelSelector"),
     });
-    levelSelector.right = layoutBounds.maxX - MARGIN;
-    levelSelector.top = this.controlPanel.bottom + RIGHT_COLUMN_GAP;
+    this.levelSelector.right = layoutBounds.maxX - MARGIN;
+    this.levelSelector.top = this.controlPanel.bottom + RIGHT_COLUMN_GAP;
 
     this.hudNode = new HudNode(model, {
       interruptInput: () => this.interruptSubtreeInput(),
     });
     this.hudNode.right = layoutBounds.maxX - MARGIN;
-    this.hudNode.top = levelSelector.bottom + RIGHT_COLUMN_GAP;
+    this.hudNode.top = this.levelSelector.bottom + RIGHT_COLUMN_GAP;
 
     const resetAllButton = new ResetAllButton({
+      baseColor: MazeGameColors.resetAllButtonColorProperty,
       listener: () => {
         this.interruptSubtreeInput();
         model.reset();
@@ -149,13 +154,13 @@ export class MazeGameScreenView extends ScreenView {
       right: layoutBounds.maxX - MARGIN,
       bottom: layoutBounds.maxY - MARGIN,
       accessibleName: StringManager.getInstance().getHudStrings().resetAllStringProperty,
-      tandem: providedOptions.tandem.createTandem("resetAllButton"),
+      tandem: options.tandem.createTandem("resetAllButton"),
     });
 
-    this.children = [this.arenaNode, this.controlPanel, levelSelector, this.hudNode, resetAllButton];
+    this.children = [this.arenaNode, this.controlPanel, this.levelSelector, this.hudNode, resetAllButton];
 
     this.pdomPlayAreaNode.pdomOrder = [this.arenaNode];
-    this.pdomControlAreaNode.pdomOrder = [this.controlPanel, levelSelector, this.hudNode, resetAllButton];
+    this.pdomControlAreaNode.pdomOrder = [this.controlPanel, this.levelSelector, this.hudNode, resetAllButton];
 
     this.keyboardListener = KeyboardListener.createGlobal(this, {
       keys: [...KEYS],
@@ -232,6 +237,7 @@ export class MazeGameScreenView extends ScreenView {
     this.keyboardListener.dispose();
 
     this.hudNode.dispose();
+    this.levelSelector.dispose();
     this.controlPanel.dispose();
     this.arenaNode.dispose();
 

@@ -7,9 +7,10 @@
 
 import { DerivedProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
+import { optionize } from "scenerystack/phet-core";
 import { HBox, Text, VBox } from "scenerystack/scenery";
 import { NumberDisplay, PhetFont, RestartButton, StepForwardButton } from "scenerystack/scenery-phet";
-import { Panel } from "scenerystack/sun";
+import { Panel, type PanelOptions } from "scenerystack/sun";
 import { ElapsedTimeNode } from "scenerystack/vegas";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
@@ -23,9 +24,11 @@ const HBOX_SPACING = 6;
 const VBOX_SPACING = 6;
 const CLOCK_ICON_RADIUS = 11;
 
-type HudNodeOptions = {
+type HudNodeSelfOptions = {
   interruptInput?: () => void;
 };
+
+type HudNodeOptions = HudNodeSelfOptions & PanelOptions;
 
 export default class HudNode extends Panel {
   private readonly elapsedTimeNodeRef: ElapsedTimeNode;
@@ -43,15 +46,28 @@ export default class HudNode extends Panel {
     this.nextLevelButtonRef.visible = v;
   };
 
-  public constructor(model: MazeGameModel, options: HudNodeOptions = {}) {
+  public constructor(model: MazeGameModel, providedOptions?: HudNodeOptions) {
     const stringManager = StringManager.getInstance();
     const strings = stringManager.getHudStrings();
     const a11yStrings = stringManager.getA11yStrings();
-    const interruptInput =
-      options.interruptInput ??
-      ((): void => {
-        // No-op when HudNode is constructed without a ScreenView interrupt callback.
-      });
+
+    const options = optionize<HudNodeOptions, HudNodeSelfOptions, PanelOptions>()(
+      {
+        interruptInput: (): void => {
+          // No-op when HudNode is constructed without a ScreenView interrupt callback.
+        },
+        fill: MazeGameColors.panelFillProperty,
+        stroke: MazeGameColors.panelStrokeProperty,
+        cornerRadius: MazeGameConstants.PANEL_CORNER_RADIUS,
+        xMargin: MazeGameConstants.PANEL_X_MARGIN,
+        yMargin: MazeGameConstants.HUD_PANEL_Y_MARGIN,
+        align: "left",
+        accessibleName: a11yStrings.hudPanelStringProperty,
+      },
+      providedOptions,
+    );
+
+    const interruptInput = options.interruptInput;
 
     const elapsedTimeNode = new ElapsedTimeNode(model.timeProperty, {
       clockIconRadius: CLOCK_ICON_RADIUS,
@@ -70,7 +86,10 @@ export default class HudNode extends Panel {
     const collisionsRow = new HBox({
       spacing: HBOX_SPACING,
       children: [
-        new Text("×", { font: COLLISION_MARKER_FONT, fill: MazeGameColors.foregroundColorProperty }),
+        new Text(strings.collisionMultiplierStringProperty, {
+          font: COLLISION_MARKER_FONT,
+          fill: MazeGameColors.foregroundColorProperty,
+        }),
         collisionsDisplay,
       ],
     });
@@ -85,7 +104,7 @@ export default class HudNode extends Panel {
 
     const resetLevelButton = new RestartButton({
       baseColor: MazeGameColors.resetLevelButtonColorProperty,
-      listener: () => {
+      listener: (): void => {
         interruptInput();
         model.resetLevel();
       },
@@ -94,7 +113,7 @@ export default class HudNode extends Panel {
 
     const nextLevelButton = new StepForwardButton({
       baseColor: MazeGameColors.nextLevelButtonColorProperty,
-      listener: () => {
+      listener: (): void => {
         interruptInput();
         model.advanceLevel();
       },
@@ -113,15 +132,8 @@ export default class HudNode extends Panel {
       children: [elapsedTimeNode, collisionsRow, collisionWarning, actionButtons],
     });
 
-    super(content, {
-      fill: MazeGameColors.panelFillProperty,
-      stroke: MazeGameColors.panelStrokeProperty,
-      cornerRadius: MazeGameConstants.PANEL_CORNER_RADIUS,
-      xMargin: MazeGameConstants.PANEL_X_MARGIN,
-      yMargin: MazeGameConstants.HUD_PANEL_Y_MARGIN,
-      align: "left",
-      accessibleName: a11yStrings.hudPanelStringProperty,
-    });
+    const { interruptInput: _interruptInput, ...panelOptions } = options;
+    super(content, panelOptions);
 
     this.elapsedTimeNodeRef = elapsedTimeNode;
     this.collisionsDisplayRef = collisionsDisplay;
@@ -130,14 +142,14 @@ export default class HudNode extends Panel {
 
     const collisionWarningVisibleProperty = new DerivedProperty(
       [model.collisionsProperty, model.wonProperty],
-      (c, won) => c > 0 && !won,
+      (c, won): boolean => c > 0 && !won,
     );
     this.derivedProperties.push(collisionWarningVisibleProperty);
     collisionWarningVisibleProperty.link(this.updateCollisionWarningVisible, { disposer: this });
 
     const nextLevelVisibleProperty = new DerivedProperty(
       [model.wonProperty, model.isLastLevelProperty],
-      (won, isLastLevel) => won && !isLastLevel,
+      (won, isLastLevel): boolean => won && !isLastLevel,
     );
     this.derivedProperties.push(nextLevelVisibleProperty);
     nextLevelVisibleProperty.link(this.updateNextLevelVisible, { disposer: this });

@@ -18,13 +18,34 @@ import { TileType } from "./TileType.js";
 export class MazeGameModel implements TModel {
   public readonly particle = new Particle();
 
-  public readonly levelNameProperty = new Property<LevelKey>(LevelKey.PRACTICE);
+  private readonly levelNamePropertyImpl = new Property<LevelKey>(LevelKey.PRACTICE);
+  private readonly controlModePropertyImpl = new Property<ControlMode>(ControlMode.POSITION);
+  private readonly timePropertyImpl = new NumberProperty(0);
+  private readonly collisionsPropertyImpl = new NumberProperty(0);
+  private readonly wonPropertyImpl = new BooleanProperty(false);
+
   public readonly levelProperty: ReadOnlyProperty<Level>;
   public readonly isLastLevelProperty: ReadOnlyProperty<boolean>;
-  public readonly controlModeProperty = new Property<ControlMode>(ControlMode.POSITION);
-  public readonly timeProperty = new NumberProperty(0);
-  public readonly collisionsProperty = new NumberProperty(0);
-  public readonly wonProperty = new BooleanProperty(false);
+
+  public get levelNameProperty(): ReadOnlyProperty<LevelKey> {
+    return this.levelNamePropertyImpl;
+  }
+
+  public get controlModeProperty(): ReadOnlyProperty<ControlMode> {
+    return this.controlModePropertyImpl;
+  }
+
+  public get timeProperty(): ReadOnlyProperty<number> {
+    return this.timePropertyImpl;
+  }
+
+  public get collisionsProperty(): ReadOnlyProperty<number> {
+    return this.collisionsPropertyImpl;
+  }
+
+  public get wonProperty(): ReadOnlyProperty<boolean> {
+    return this.wonPropertyImpl;
+  }
 
   // Track previous colliding state so we only increment the counter on
   // false → true transitions (i.e. each fresh contact counts as one collision).
@@ -47,37 +68,37 @@ export class MazeGameModel implements TModel {
   };
 
   public constructor() {
-    this.levelProperty = new DerivedProperty([this.levelNameProperty], (name) => LEVELS[name]);
+    this.levelProperty = new DerivedProperty([this.levelNamePropertyImpl], (name) => LEVELS[name]);
     this.isLastLevelProperty = new DerivedProperty(
-      [this.levelNameProperty],
+      [this.levelNamePropertyImpl],
       (name) => LEVEL_KEYS.indexOf(name) === LEVEL_KEYS.length - 1,
     );
 
     // Reset particle position & game state when the level changes.
-    this.levelNameProperty.lazyLink(this.resetOnLevelChange);
+    this.levelNamePropertyImpl.lazyLink(this.resetOnLevelChange);
 
     // Reset the dormant kinematic vectors whenever the control mode changes
     // (mirrors the original UX: switching modes zeroes the unused vectors).
-    this.controlModeProperty.lazyLink(this.resetKinematicsOnModeChange);
+    this.controlModePropertyImpl.lazyLink(this.resetKinematicsOnModeChange);
 
     // Place the particle at the start tile of the initial level.
     this.placeParticleAtStart();
   }
 
   public dispose(): void {
-    this.levelNameProperty.unlink(this.resetOnLevelChange);
-    this.controlModeProperty.unlink(this.resetKinematicsOnModeChange);
+    this.levelNamePropertyImpl.unlink(this.resetOnLevelChange);
+    this.controlModePropertyImpl.unlink(this.resetKinematicsOnModeChange);
     this.isLastLevelProperty.dispose();
     this.levelProperty.dispose();
   }
 
   public step(dt: number): void {
-    if (this.wonProperty.value) {
+    if (this.wonPropertyImpl.value) {
       return;
     }
     const fixed = MazeGameConstants.FIXED_DT;
     this.timeAccumulator = Math.min(this.timeAccumulator + dt, fixed * MazeGameConstants.MAX_CATCHUP_STEPS);
-    while (this.timeAccumulator >= fixed && !this.wonProperty.value) {
+    while (this.timeAccumulator >= fixed && !this.wonPropertyImpl.value) {
       this.timeAccumulator -= fixed;
       this.stepInternal(fixed);
     }
@@ -85,7 +106,7 @@ export class MazeGameModel implements TModel {
 
   private stepInternal(dt: number): void {
     const particle = this.particle;
-    const mode = this.controlModeProperty.value;
+    const mode = this.controlModePropertyImpl.value;
     const level = this.levelProperty.value;
     const radius = particle.radius;
 
@@ -147,33 +168,37 @@ export class MazeGameModel implements TModel {
 
     const colliding = level.collidesWithTileTypeAt(TileType.WALL, particle.position.x, particle.position.y, radius);
 
-    particle.collidingProperty.value = colliding;
+    particle.setColliding(colliding);
     if (colliding && !this.previousColliding) {
-      this.collisionsProperty.value += 1;
+      this.collisionsPropertyImpl.value += 1;
     }
     this.previousColliding = colliding;
 
     // Win check: touching finish with zero collisions.
     if (
-      this.collisionsProperty.value === 0 &&
+      this.collisionsPropertyImpl.value === 0 &&
       level.collidesWithTileTypeAt(TileType.FINISH, particle.position.x, particle.position.y, particle.radius)
     ) {
-      this.wonProperty.value = true;
+      this.wonPropertyImpl.value = true;
     }
 
     // Advance the timer if the particle has moved off the start tile.
     if (this.hasStartedMoving()) {
-      this.timeProperty.value += dt;
+      this.timePropertyImpl.value += dt;
     }
   }
 
   public changeLevel(name: LevelKey): void {
-    this.levelNameProperty.value = name;
+    this.levelNamePropertyImpl.value = name;
+  }
+
+  public setControlMode(mode: ControlMode): void {
+    this.controlModePropertyImpl.value = mode;
   }
 
   public reset(): void {
-    this.levelNameProperty.reset();
-    this.controlModeProperty.reset();
+    this.levelNamePropertyImpl.reset();
+    this.controlModePropertyImpl.reset();
     this.resetGameState();
   }
 
@@ -188,19 +213,19 @@ export class MazeGameModel implements TModel {
 
   /** Advance to the next level in sequence, if one exists. */
   public advanceLevel(): void {
-    const idx = LEVEL_KEYS.indexOf(this.levelNameProperty.value);
+    const idx = LEVEL_KEYS.indexOf(this.levelNamePropertyImpl.value);
     if (idx >= 0 && idx < LEVEL_KEYS.length - 1) {
       const next = LEVEL_KEYS[idx + 1];
       if (next !== undefined) {
-        this.levelNameProperty.value = next;
+        this.levelNamePropertyImpl.value = next;
       }
     }
   }
 
   private resetGameState(): void {
-    this.timeProperty.reset();
-    this.collisionsProperty.reset();
-    this.wonProperty.reset();
+    this.timePropertyImpl.reset();
+    this.collisionsPropertyImpl.reset();
+    this.wonPropertyImpl.reset();
     this.previousColliding = false;
     this.timeAccumulator = 0;
     this.particle.setVelocityXY(0, 0);
@@ -212,7 +237,7 @@ export class MazeGameModel implements TModel {
     const start = this.levelProperty.value.startPosition();
     const center = this.levelProperty.value.tileCenter(start.col, start.row);
     this.particle.setPositionXY(center.x, center.y);
-    this.particle.collidingProperty.value = false;
+    this.particle.setColliding(false);
   }
 
   /**

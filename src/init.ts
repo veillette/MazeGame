@@ -18,4 +18,5 @@ init({
   availableLocales: ["en", "fr"],
   splashDataURI: madeWithSceneryStackSplashDataURI,
   allowLocaleSwitching: true,
+  colorProfiles: ["default", "projector"],
 });

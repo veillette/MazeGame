@@ -1,0 +1,69 @@
+---
+description: SceneryStack / PhET TypeScript coding standards for MazeGame
+globs: src/**/*.ts
+alwaysApply: true
+---
+
+# SceneryStack / TypeScript Standards
+
+## Type System
+
+**Required:**
+- Explicit return types on all functions and methods
+- Explicit parameter types — no implicit `any`
+- Use `unknown` instead of `any`; narrow with type guards before use
+- Prefer readonly properties and `Readonly<T>` / `ReadonlyArray<T>` where mutation is not intended
+- Use discriminated unions over optional fields where variants differ structurally
+- Prefer `satisfies` over `as` casts for literal/config objects
+
+**Forbidden:**
+- `any` (use `unknown` + narrowing, or a proper generic)
+- Non-null assertions (`!`) except with an explanatory comment
+- `as` type casts except at verified API boundaries (DOM, JSON parse); always add a comment justifying the cast
+- `// @ts-ignore` or `// @ts-expect-error` without a linked issue or explanation
+- `namespace` declarations, TypeScript `enum`, `module` keyword, `require()`
+
+## SceneryStack / PhET Conventions
+
+**Required:**
+- All `Property<T>` generics must be explicitly typed
+- `TReadOnlyProperty<T>` in function signatures when a function only reads a property
+- `Emitter<[T]>` must be parameterized; bare `Emitter` is forbidden
+- Dispose patterns: classes that link listeners must implement `dispose()` and call `super.dispose()`; use `{ disposer: this }` on links
+- Option types via `optionize<MyOptions, SelfOptions, ParentOptions>()` — do not spread raw objects into parent constructors
+- Prefer `DerivedProperty` over manual listener-based derived state
+- Node layout: use `boundsProperty` / `ManualConstraint` rather than manual coordinate recalculation or `node.children[i]`
+
+**Forbidden:**
+- Bare `new Property(value)` without a type parameter when T is not inferrable
+- Linking to a property without corresponding unlink/dispose
+- Reaching into `node.children` by index for layout logic
+- Mutating `options` object passed in by the caller
+
+## MazeGame Project Conventions
+
+- Colors in `src/MazeGameColors.ts` — never hardcode hex in view files
+- Strings in `src/i18n/strings_*.json` — never hardcode display text in view files
+- Positioning uses `this.layoutBounds` and named constants in `MazeGameConstants.ts`
+- No TypeScript `enum` — use `const X = { ... } as const` + `keyof typeof`
+- `import type` for type-only imports (`verbatimModuleSyntax`)
+- `import "./brand.js"` must remain the first import in `src/main.ts`
+
+## Anti-Patterns
+
+| Anti-pattern | Correct approach |
+|---|---|
+| `as any` | `unknown` + type guard or proper generic |
+| `obj!.field` without comment | null check or assertion with comment |
+| `Property` without type param | `Property<MyType>` |
+| Listener linked, never unlinked | `{ disposer: this }` or stored unlink in `dispose()` |
+| `options = { ...defaults, ...options }` | `optionize()` |
+| Inline magic numbers | Named constants with units in the name |
+
+## Review Format
+
+When reviewing or writing code, flag violations as:
+
+**[VIOLATION]** — rule name — explanation
+
+Provide a corrected snippet immediately after. For design issues, explain the preferred SceneryStack pattern before rewriting.

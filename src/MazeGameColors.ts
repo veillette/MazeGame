@@ -65,6 +65,13 @@ const MazeGameColors = {
 
   // Next Level button.
   nextLevelButtonColorProperty: profileColor("nextLevelButton", "#66bb6a", "#388e3c"),
+
+  // Level selector radio button highlight states.
+  levelButtonSelectedColorProperty: profileColor("levelButtonSelected", "#66bb6a", "#388e3c"),
+  levelButtonUnselectedColorProperty: profileColor("levelButtonUnselected", "#f2ffcc", "#e8f5e9"),
+
+  // Reset All button (bottom-right).
+  resetAllButtonColorProperty: profileColor("resetAllButton", "#ff9800", "#ef6c00"),
 };
 
 MazeGameNamespace.register("MazeGameColors", MazeGameColors);

@@ -10,7 +10,7 @@
  * LadyBug RemoteControlPanel.
  */
 
-import { Multilink } from "scenerystack/axon";
+import { Multilink, Property } from "scenerystack/axon";
 import { Bounds2, clamp, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import type { ProfileColorProperty } from "scenerystack/scenery";
@@ -49,6 +49,7 @@ export default class ControlPanel extends Panel {
   private readonly padLayerRef: Node;
   private readonly padDragListener: DragListener;
   private readonly reflectMultilink: ReturnType<typeof Multilink.multilink>;
+  private readonly controlModeBridgeProperty: Property<ControlMode>;
   private readonly arrowRef: ArrowNode;
   private readonly knobRef: Circle;
 
@@ -63,6 +64,8 @@ export default class ControlPanel extends Panel {
     const strings = stringManager.getControlModeStrings();
     const a11yStrings = stringManager.getA11yStrings();
 
+    const controlModeBridgeProperty = new Property<ControlMode>(model.controlModeProperty.value);
+
     const titleFont = new PhetFont({ size: TITLE_FONT_SIZE, weight: "bold" });
     const tabFont = new PhetFont(TAB_FONT_SIZE);
 
@@ -72,7 +75,7 @@ export default class ControlPanel extends Panel {
     });
 
     const tabs = new RectangularRadioButtonGroup<ControlMode>(
-      model.controlModeProperty,
+      controlModeBridgeProperty,
       [
         {
           value: ControlMode.POSITION,
@@ -139,6 +142,25 @@ export default class ControlPanel extends Panel {
     this.padLayerRef = padLayer;
     this.arrowRef = arrow;
     this.knobRef = knob;
+    this.controlModeBridgeProperty = controlModeBridgeProperty;
+
+    model.controlModeProperty.link(
+      (mode): void => {
+        if (controlModeBridgeProperty.value !== mode) {
+          controlModeBridgeProperty.value = mode;
+        }
+      },
+      { disposer: this },
+    );
+
+    controlModeBridgeProperty.link(
+      (mode): void => {
+        if (model.controlModeProperty.value !== mode) {
+          model.setControlMode(mode);
+        }
+      },
+      { disposer: this },
+    );
 
     let isDragging = false;
 
@@ -199,13 +221,13 @@ export default class ControlPanel extends Panel {
     };
 
     this.padDragListener = new DragListener({
-      start: () => {
+      start: (): void => {
         if (model.wonProperty.value) {
           return;
         }
         isDragging = true;
       },
-      drag: (event) => {
+      drag: (event): void => {
         if (model.wonProperty.value) {
           return;
         }
@@ -214,7 +236,7 @@ export default class ControlPanel extends Panel {
         setTip(tip);
         applyTipToModel(tip);
       },
-      end: () => {
+      end: (): void => {
         isDragging = false;
       },
     });
@@ -235,6 +257,7 @@ export default class ControlPanel extends Panel {
 
   public override dispose(): void {
     this.reflectMultilink.dispose();
+    this.controlModeBridgeProperty.dispose();
     this.padLayerRef.removeInputListener(this.padDragListener);
     this.padDragListener.dispose();
     super.dispose();
