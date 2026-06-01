@@ -30,6 +30,7 @@ npm start        # dev server → http://localhost:5173
 | `npm run preview` | Preview the production build locally |
 | `npm run check` | TypeScript type check (`src/` + `scripts/`) |
 | `npm test` | Run Vitest unit tests (model collision & game logic) |
+| `npm run test:query-params` | Headless Playwright smoke tests for CRC query params |
 | `npm run lint` | Biome lint check |
 | `npm run fix` | Lint + auto-fix |
 | `npm run icons` | Regenerate PNG icons from `icons/icon.svg` |
@@ -40,14 +41,38 @@ npm start        # dev server → http://localhost:5173
 - Four levels (Practice through Certain Death)
 - English and French UI (switch locale in sim preferences)
 - Projector (light) color profile
+- Interactive description (PDOM), screen summary, dynamic alerts, keyboard help
+- Sound effects and velocity sonification; optional particle trace preference
 - PWA: installable and offline-capable after first load (`vite-plugin-pwa`)
 
 ## Architecture
 
-Entry: `src/main.ts` (must import `./brand.js` first). Model in `src/maze-game/model/`,
-views in `src/maze-game/view/`. Colors: `src/MazeGameColors.ts`. Strings: `src/i18n/`.
+Entry: `src/main.ts` (must import `./brand.js` first).
 
-See [CLAUDE.md](CLAUDE.md) for full file map and conventions.
+| Layer | Location |
+|---|---|
+| Model | `src/maze-game/model/` |
+| View | `src/maze-game/view/` |
+| Accessibility | `src/maze-game/a11y/` |
+| Keyboard | `src/maze-game/keyboard/` |
+| Colors | `src/MazeGameColors.ts` |
+| Strings | `src/i18n/` |
+
+See [CLAUDE.md](CLAUDE.md) for the full file map and conventions.
+
+## Documentation
+
+| Doc | Contents |
+|---|---|
+| [doc/model.md](doc/model.md) | Pedagogical model description |
+| [doc/implementation-notes.md](doc/implementation-notes.md) | Architecture, a11y, testing |
+| [doc/query-parameter-testing.md](doc/query-parameter-testing.md) | CRC query params and test recipes |
+
+### A11y View (development)
+
+Open `http://localhost:5173/a11y-view.html` for a side-by-side PDOM mirror and live alert log
+while exercising the sim in the embedded iframe. See [query-parameter-testing.md](doc/query-parameter-testing.md)
+for details.
 
 ## CI
 

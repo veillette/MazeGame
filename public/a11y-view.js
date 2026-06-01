@@ -2,7 +2,7 @@
  * a11y-view.js
  *
  * Side-by-side accessibility development view for Maze Game (SceneryStack/Vite).
- * Adapted from PhET chipper/wrappers/a11y-view — simplified legacy PDOM view + activity log.
+ * Adapted from PhET chipper/wrappers/a11y-view — PDOM mirror + activity log.
  */
 
 const ACTIVITY_LOG_LENGTH = 40;

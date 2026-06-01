@@ -56,7 +56,7 @@ alwaysApply: true
 
 - Colors in `src/MazeGameColors.ts` — never hardcode hex in view files
 - Strings in `src/i18n/strings_*.json` — never hardcode display text in view files
-- Positioning uses `this.layoutBounds` and named constants in `MazeGameLayoutConstants.ts`
+- Positioning uses `this.layoutBounds` and named constants in `MazeGameLayoutConstants.ts` (view) and `MazeGameConstants.ts` (physics/panel chrome)
 - No TypeScript `enum` — use `const X = { ... } as const` + `keyof typeof`
 - `import type` for type-only imports (`verbatimModuleSyntax`)
 - `import "./brand.js"` must remain the first import in `src/main.ts`

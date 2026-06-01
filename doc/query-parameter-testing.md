@@ -143,7 +143,7 @@ Focus: control panel tabs, level selector, HUD patterns, info dialog, screen sum
 | `BASE?ea` + Tab | PDOM order: screen summary → play area (arena) → control area |
 | `BASE?logInteractiveDescriptionResponses&ea` | Log collision/win/level/mode alerts to console |
 | `BASE?fuzzBoard&ea` | Automated keyboard fuzz |
-| Screen reader | Dynamic HUD values, movement alerts, win announcement |
+| Screen reader | Dynamic HUD values, collision/win alerts, particle help callout |
 
 PDOM order is documented in [implementation-notes.md](implementation-notes.md).
 
@@ -163,24 +163,14 @@ Optional: use `?eall` instead of `?ea` for steps 1 and 4.
 
 ---
 
-## Automated run results (headless)
+## Automated smoke tests
 
-Command: `MAZE_GAME_URL=http://127.0.0.1:4174/ npm run test:query-params`
+```bash
+npm run build && npm run preview   # in one terminal
+npm run test:query-params          # in another; or set MAZE_GAME_URL to preview URL
+```
 
-| Recipe | Result | Notes |
-|--------|--------|-------|
-| baseline | pass | `isProduction: true`, fuzz off |
-| `?ea` | pass | `ea: true` |
-| `?dev&showPointerAreas` | pass | `dev` + `showPointerAreas` true |
-| `?stringTest=double` / `long` | pass | `stringTest` set correctly |
-| `?fuzz&ea&disableModals` | pass | `isFuzzEnabled: true`, 8s fuzz |
-| `?fuzzBoard&ea` | pass | CSP console noise from synthetic events (no assertion failures) |
-| `?fuzz&ea&listenerOrder=random` | pass | `listenerOrder: "random"` |
-| `?locale=fr&ea` | pass | `locale: "fr"` |
-| `?logInteractiveDescriptionResponses&ea` | pass | logging flag on |
-| `?ea` + Tab ×12 | pass | Multiple PDOM focus targets reached |
-
-Re-run after dependency or SceneryStack upgrades.
+The script exercises baseline load, `?ea`, layout overlays, string tests, fuzz, PDOM fuzz, listener-order randomization, locale, alert logging, and Tab focus targets. Re-run after dependency or SceneryStack upgrades.
 
 ---
 
