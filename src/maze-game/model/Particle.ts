@@ -16,7 +16,7 @@ import { Vector2, Vector2Property } from "scenerystack/dot";
 import MazeGameConstants from "./MazeGameConstants.js";
 
 const assertFiniteXY = (x: number, y: number, label: string): void => {
-  assert && assert(Number.isFinite(x) && Number.isFinite(y), `${label} must be finite`);
+  assert?.(Number.isFinite(x) && Number.isFinite(y), `${label} must be finite`);
 };
 
 export default class Particle {

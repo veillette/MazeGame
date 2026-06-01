@@ -124,19 +124,17 @@ const countTiles = (level: Level, type: TileType): number => {
 };
 
 const assertBuiltInLevelInvariants = (level: Level, name: string): void => {
-  assertSlow &&
-    assertSlow(
-      countTiles(level, TileType.START) === 1 && countTiles(level, TileType.FINISH) === 1,
-      `${name}: level must have exactly one START and one FINISH`,
-    );
+  assertSlow?.(
+    countTiles(level, TileType.START) === 1 && countTiles(level, TileType.FINISH) === 1,
+    `${name}: level must have exactly one START and one FINISH`,
+  );
 };
 
 for (const key of LEVEL_KEYS) {
   assertBuiltInLevelInvariants(LEVELS[key], key);
 }
 
-assertSlow &&
-  assertSlow(
-    LEVEL_KEYS.length === Object.keys(LEVELS).length && LEVEL_KEYS.every((key) => key in LEVELS),
-    "LEVEL_KEYS must match LEVELS keys",
-  );
+assertSlow?.(
+  LEVEL_KEYS.length === Object.keys(LEVELS).length && LEVEL_KEYS.every((key) => key in LEVELS),
+  "LEVEL_KEYS must match LEVELS keys",
+);

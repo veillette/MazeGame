@@ -443,7 +443,6 @@ async function handleSimLoadMessage(event) {
 
   const pdomRoot = await waitForPdomRoot(innerWindow);
   if (!isDomElement(pdomRoot)) {
-    console.error("A11y View: pdomRootElement not found — is supportsInteractiveDescription enabled?");
     return;
   }
 

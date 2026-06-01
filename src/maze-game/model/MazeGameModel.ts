@@ -123,7 +123,7 @@ export class MazeGameModel implements TModel {
   }
 
   private stepInternal(dt: number): void {
-    assert && assert(dt > 0, "stepInternal dt must be positive");
+    assert?.(dt > 0, "stepInternal dt must be positive");
     const particle = this.particle;
     const mode = this.controlModePropertyImpl.value;
     const level = this.levelProperty.value;
@@ -221,26 +221,22 @@ export class MazeGameModel implements TModel {
   private assertStepInvariants(mode: ControlMode, colliding: boolean): void {
     const particle = this.particle;
 
-    assert &&
-      assert(
-        particle.collidingProperty.value === colliding,
-        "particle collidingProperty must match wall collision state",
-      );
+    assert?.(
+      particle.collidingProperty.value === colliding,
+      "particle collidingProperty must match wall collision state",
+    );
 
     if (mode !== ControlMode.POSITION && colliding) {
-      assert &&
-        assert(particle.velocity.x === 0 && particle.velocity.y === 0, "velocity must be zero during wall contact");
+      assert?.(particle.velocity.x === 0 && particle.velocity.y === 0, "velocity must be zero during wall contact");
       if (mode === ControlMode.ACCELERATION) {
-        assert &&
-          assert(
-            particle.acceleration.x === 0 && particle.acceleration.y === 0,
-            "acceleration must be zero during wall contact",
-          );
+        assert?.(
+          particle.acceleration.x === 0 && particle.acceleration.y === 0,
+          "acceleration must be zero during wall contact",
+        );
       }
     }
 
-    assert &&
-      assert(!this.wonPropertyImpl.value || this.collisionsPropertyImpl.value === 0, "win requires zero collisions");
+    assert?.(!this.wonPropertyImpl.value || this.collisionsPropertyImpl.value === 0, "win requires zero collisions");
   }
 
   public changeLevel(name: LevelKey): void {
@@ -295,11 +291,10 @@ export class MazeGameModel implements TModel {
     this.cachedStartCenter = center;
     this.particle.setPositionXY(center.x, center.y);
     this.particle.setColliding(false);
-    assert &&
-      assert(
-        !level.collidesWithTileTypeAt(TileType.WALL, center.x, center.y, this.particle.radius),
-        "start position must not overlap a wall",
-      );
+    assert?.(
+      !level.collidesWithTileTypeAt(TileType.WALL, center.x, center.y, this.particle.radius),
+      "start position must not overlap a wall",
+    );
   }
 
   /**
