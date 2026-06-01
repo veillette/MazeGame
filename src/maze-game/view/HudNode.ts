@@ -5,13 +5,13 @@
  * and a collision-warning message.
  */
 
-import { DerivedProperty } from "scenerystack/axon";
+import { DerivedProperty, DerivedStringProperty, PatternStringProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import { optionize } from "scenerystack/phet-core";
 import { HBox, Text, VBox } from "scenerystack/scenery";
 import { NumberDisplay, PhetFont, RestartButton, StepForwardButton } from "scenerystack/scenery-phet";
 import { Panel, type PanelOptions } from "scenerystack/sun";
-import { ElapsedTimeNode } from "scenerystack/vegas";
+import { ElapsedTimeNode, GameTimer } from "scenerystack/vegas";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
@@ -57,7 +57,21 @@ export default class HudNode extends Panel {
       font: new PhetFont(MazeGameLayoutConstants.HUD_VALUE_FONT_SIZE),
       textFill: MazeGameColors.foregroundColorProperty,
     });
-    elapsedTimeNode.accessibleName = a11yStrings.timeDisplayStringProperty;
+
+    const derivedProperties: Array<{ dispose(): void }> = [];
+
+    const elapsedTimeAccessibleValueProperty = new DerivedStringProperty(
+      [model.timeProperty],
+      (time): string => GameTimer.formatTime(time),
+      { phetioFeatured: false },
+    );
+    derivedProperties.push(elapsedTimeAccessibleValueProperty);
+
+    const elapsedTimeAccessibleNameProperty = new PatternStringProperty(a11yStrings.timeDisplayPatternStringProperty, {
+      value: elapsedTimeAccessibleValueProperty,
+    });
+    derivedProperties.push(elapsedTimeAccessibleNameProperty);
+    elapsedTimeNode.accessibleName = elapsedTimeAccessibleNameProperty;
 
     const collisionsDisplay = new NumberDisplay(
       model.collisionsProperty,
@@ -71,7 +85,13 @@ export default class HudNode extends Panel {
         },
       },
     );
-    collisionsDisplay.accessibleName = a11yStrings.collisionsDisplayStringProperty;
+
+    const collisionsAccessibleNameProperty = new PatternStringProperty(
+      a11yStrings.collisionsDisplayPatternStringProperty,
+      { value: collisionsDisplay.accessibleValueStringProperty },
+    );
+    derivedProperties.push(collisionsAccessibleNameProperty);
+    collisionsDisplay.accessibleName = collisionsAccessibleNameProperty;
 
     const collisionsRow = new HBox({
       spacing: MazeGameLayoutConstants.HUD_HBOX_SPACING,
@@ -133,6 +153,7 @@ export default class HudNode extends Panel {
 
     this.elapsedTimeNodeRef = elapsedTimeNode;
     this.collisionsDisplayRef = collisionsDisplay;
+    this.derivedProperties.push(...derivedProperties);
 
     const collisionWarningVisibleProperty = new DerivedProperty(
       [model.collisionsProperty, model.wonProperty],

@@ -38,6 +38,7 @@ export const createParticleTracePreference = (parentTandem: Tandem): HBox => {
       ),
       trackFillRight: MazeGameColors.toggleSwitchTrackFillRightProperty,
       accessibleName: strings.particleTraceStringProperty,
+      accessibleHelpText: strings.particleTraceDescriptionStringProperty,
     }),
   );
 

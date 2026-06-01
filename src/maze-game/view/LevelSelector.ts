@@ -5,7 +5,7 @@
  * group bound to a local bridge Property synced with the model.
  */
 
-import { Property } from "scenerystack/axon";
+import { Property, type TReadOnlyProperty } from "scenerystack/axon";
 import { optionize } from "scenerystack/phet-core";
 import { Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
@@ -68,9 +68,20 @@ export default class LevelSelector extends Panel {
 
     const { tandem, ...panelOptions } = options;
 
+    const levelNameByKey: Record<LevelKey, TReadOnlyProperty<string>> = {
+      [LevelKey.PRACTICE]: strings.practiceStringProperty,
+      [LevelKey.LEVEL_1]: strings.level1StringProperty,
+      [LevelKey.LEVEL_2]: strings.level2StringProperty,
+      [LevelKey.CERTAIN_DEATH]: strings.certainDeathStringProperty,
+    };
+
     const radioGroup = new AquaRadioButtonGroup<LevelKey>(
       levelNameBridgeProperty,
-      LEVEL_KEYS.map((key) => ({ value: key, createNode: labelByKey[key] })),
+      LEVEL_KEYS.map((key) => ({
+        value: key,
+        createNode: labelByKey[key],
+        options: { accessibleName: levelNameByKey[key] },
+      })),
       {
         spacing: MazeGameLayoutConstants.LEVEL_SELECTOR_RADIO_BUTTON_SPACING,
         radioButtonOptions: {
@@ -97,6 +108,7 @@ export default class LevelSelector extends Panel {
 
     super(content, panelOptions);
     radioGroup.accessibleName = strings.titleStringProperty;
+    radioGroup.accessibleHelpText = StringManager.getInstance().getA11yStrings().levelSelectorHelpStringProperty;
 
     this.levelNameBridgeProperty = levelNameBridgeProperty;
 

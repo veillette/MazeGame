@@ -8,16 +8,16 @@
  * step(dt) advances the collision-flicker animation and the win-pulse ring.
  */
 
-import { DerivedProperty, Multilink } from "scenerystack/axon";
-import type { Bounds2 } from "scenerystack/dot";
-import { Vector2 } from "scenerystack/dot";
+import { DerivedProperty, Multilink, Property } from "scenerystack/axon";
+import { Bounds2, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import type { ModelViewTransform2 } from "scenerystack/phetcommon";
 import type { SceneryEvent } from "scenerystack/scenery";
 import { Circle, type Color, DragListener, LinearGradient, Node, Path, Rectangle, Text } from "scenerystack/scenery";
-import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
+import { ArrowNode, MovementAlerter, PhetFont } from "scenerystack/scenery-phet";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors, { TRANSPARENT_COLOR } from "../../MazeGameColors.js";
+import { createModeDependentHelpTextProperty } from "../a11y/createA11yDerivedProperties.js";
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 import { particleTraceEnabledProperty } from "../MazeGamePreferences.js";
 import { ControlMode } from "../model/ControlMode.js";
@@ -54,6 +54,8 @@ export default class ArenaNode extends Node {
   private readonly modelRef: MazeGameModel;
 
   private readonly particleDragListener: DragListener;
+  private readonly movementAlerter: MovementAlerter;
+  private readonly movementBoundsProperty: Property<Bounds2>;
   private readonly vectorMultilink: ReturnType<typeof Multilink.multilink>;
   private readonly wallColorMultilink: ReturnType<typeof Multilink.multilink>;
   private readonly derivedProperties: Array<{ dispose(): void }> = [];
@@ -324,6 +326,30 @@ export default class ArenaNode extends Node {
 
     this.particleVisual = createParticleVisual(1);
     this.particleVisual.root.accessibleName = a11yStrings.particleStringProperty;
+
+    const particleHelpTextProperty = createModeDependentHelpTextProperty(
+      model.controlModeProperty,
+      a11yStrings.particleHelpPositionStringProperty,
+      a11yStrings.particleHelpVelocityStringProperty,
+      a11yStrings.particleHelpAccelerationStringProperty,
+    );
+    this.derivedProperties.push(particleHelpTextProperty);
+    this.particleVisual.root.accessibleHelpText = particleHelpTextProperty;
+
+    const halfWidth = MazeGameConstants.LEVEL_MODEL_WIDTH / 2;
+    const halfHeight = MazeGameConstants.LEVEL_MODEL_HEIGHT / 2;
+    this.movementBoundsProperty = new Property(new Bounds2(-halfWidth, -halfHeight, halfWidth, halfHeight));
+    this.derivedProperties.push(this.movementBoundsProperty);
+
+    this.movementAlerter = new MovementAlerter(model.particle.positionProperty, {
+      alertToVoicing: false,
+      descriptionAlertNode: this.particleVisual.root,
+      modelViewTransform,
+      borderAlertsOptions: {
+        boundsProperty: this.movementBoundsProperty,
+      },
+    });
+
     this.addChild(this.particleVisual.root);
 
     particleTraceEnabledProperty.link(this.syncTracePreference, { disposer: this });
@@ -348,6 +374,12 @@ export default class ArenaNode extends Node {
           this.particleVisual.body.globalToParentPoint(event.pointer.point),
         );
         model.particle.setPositionXY(local.x, local.y);
+      },
+      end: (): void => {
+        if (model.wonProperty.value || model.controlModeProperty.value !== ControlMode.POSITION) {
+          return;
+        }
+        this.movementAlerter.endDrag();
       },
     });
     this.particleVisual.body.addInputListener(this.particleDragListener);
@@ -425,6 +457,7 @@ export default class ArenaNode extends Node {
    */
   public setLayout(modelViewTransform: ModelViewTransform2, viewBounds: Bounds2): void {
     this.levelLayoutRefs.modelViewTransform = modelViewTransform;
+    this.movementAlerter.modelViewTransform = modelViewTransform;
     this.floorRect.rectBounds = viewBounds;
 
     this.tileSizeView = modelViewTransform.modelToViewDeltaX(MazeGameConstants.TILE_SIZE);

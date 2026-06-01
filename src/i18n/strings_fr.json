@@ -47,11 +47,34 @@
     "stopMotionDescription": "En mode Vitesse ou Accélération, remet la vitesse ou l'accélération à zéro."
   },
   "a11y": {
-    "controlPad": "Panneau de contrôle. Faites glisser le bouton pour régler la position, la vitesse ou l'accélération.",
-    "particle": "Particule. Faites glisser pour déplacer en mode Position.",
-    "timeDisplay": "Temps écoulé, en secondes",
-    "collisionsDisplay": "Nombre de collisions avec un mur",
+    "controlPad": "Panneau de contrôle",
+    "controlPadHelpPosition": "Faites glisser le bouton ou utilisez les flèches pour régler la position.",
+    "controlPadHelpVelocity": "Faites glisser le bouton ou utilisez les flèches pour régler la vitesse. Espace pour arrêter.",
+    "controlPadHelpAcceleration": "Faites glisser le bouton ou utilisez les flèches pour régler l'accélération. Espace pour arrêter.",
+    "particle": "Particule",
+    "particleHelpPosition": "Mode Position. Faites glisser ou utilisez les flèches.",
+    "particleHelpVelocity": "Mode Vitesse. Utilisez le panneau de contrôle ou les flèches.",
+    "particleHelpAcceleration": "Mode Accélération. Utilisez le panneau de contrôle ou les flèches.",
+    "timeDisplayPattern": "Temps écoulé, {{value}}",
+    "collisionsDisplayPattern": "Collisions avec un mur, {{value}}",
     "hudPanel": "État de la partie et contrôles du niveau",
-    "levelComplete": "But atteint sans collision"
+    "levelComplete": "But atteint sans collision",
+    "collisionAlert": "Collision avec un mur",
+    "levelCompleteAlert": "But atteint sans collision",
+    "levelChangedPattern": "Niveau actuel, {{level}}",
+    "controlModeChangedPattern": "Mode de contrôle, {{mode}}",
+    "levelSelectorHelp": "Choisissez un niveau de labyrinthe. Réinitialise la partie en cours.",
+    "positionModeHelp": "Définit directement la position de la particule.",
+    "velocityModeHelp": "Définit la vitesse de la particule. Espace pour arrêter le mouvement.",
+    "accelerationModeHelp": "Définit l'accélération de la particule. Espace pour arrêter le mouvement.",
+    "screenSummary": {
+      "playArea": "Dirigez la particule rouge dans le labyrinthe jusqu'à la case d'arrivée. Atteignez le but sans aucune collision pour gagner.",
+      "controlArea": "Choisissez Position, Vitesse ou Accélération. Utilisez le panneau de contrôle, faites glisser la particule ou les flèches. Choisissez un niveau et suivez le temps et les collisions.",
+      "interactionHint": "Les flèches ou W, A, S, D contrôlent la particule. Espace arrête le mouvement en mode Vitesse ou Accélération.",
+      "currentLevelPattern": "Niveau actuel, {{level}}",
+      "currentModePattern": "Mode de contrôle, {{mode}}",
+      "collisionCountPattern": "Collisions avec un mur, {{value}}",
+      "wonStatus": "Niveau terminé"
+    }
   }
 }

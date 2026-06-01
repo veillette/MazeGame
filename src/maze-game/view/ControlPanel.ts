@@ -14,13 +14,15 @@ import { Multilink, Property } from "scenerystack/axon";
 import { Bounds2, clamp, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { optionize } from "scenerystack/phet-core";
-import type { ProfileColorProperty } from "scenerystack/scenery";
-import { Circle, DragListener, Node, Rectangle, Text, VBox } from "scenerystack/scenery";
+import type { OneKeyStroke, ProfileColorProperty } from "scenerystack/scenery";
+import { Circle, DragListener, KeyboardListener, Node, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Panel, type PanelOptions, RectangularRadioButtonGroup } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
+import { createModeDependentHelpTextProperty } from "../a11y/createA11yDerivedProperties.js";
+import { applyMazeGameKeyboardInput } from "../keyboard/applyMazeGameKeyboardInput.js";
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 import { ControlMode } from "../model/ControlMode.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
@@ -44,10 +46,12 @@ type ControlPanelOptions = ControlPanelSelfOptions & PanelOptions;
 export default class ControlPanel extends Panel {
   private readonly padLayerRef: Node;
   private readonly padDragListener: DragListener;
+  private readonly padKeyboardListener: KeyboardListener<OneKeyStroke[]>;
   private readonly reflectMultilink: ReturnType<typeof Multilink.multilink>;
   private readonly controlModeBridgeProperty: Property<ControlMode>;
   private readonly arrowRef: ArrowNode;
   private readonly knobRef: Circle;
+  private readonly derivedProperties: Array<{ dispose(): void }> = [];
 
   private readonly recolorForMode = (mode: ControlMode): void => {
     const color = COLOR_BY_MODE[mode];
@@ -98,7 +102,10 @@ export default class ControlPanel extends Panel {
               font: tabFont,
               fill: COLOR_BY_MODE[ControlMode.POSITION],
             }),
-          options: { accessibleName: strings.positionStringProperty },
+          options: {
+            accessibleName: strings.positionStringProperty,
+            accessibleHelpText: a11yStrings.positionModeHelpStringProperty,
+          },
         },
         {
           value: ControlMode.VELOCITY,
@@ -107,7 +114,10 @@ export default class ControlPanel extends Panel {
               font: tabFont,
               fill: COLOR_BY_MODE[ControlMode.VELOCITY],
             }),
-          options: { accessibleName: strings.velocityStringProperty },
+          options: {
+            accessibleName: strings.velocityStringProperty,
+            accessibleHelpText: a11yStrings.velocityModeHelpStringProperty,
+          },
         },
         {
           value: ControlMode.ACCELERATION,
@@ -116,7 +126,10 @@ export default class ControlPanel extends Panel {
               font: tabFont,
               fill: COLOR_BY_MODE[ControlMode.ACCELERATION],
             }),
-          options: { accessibleName: strings.accelerationStringProperty },
+          options: {
+            accessibleName: strings.accelerationStringProperty,
+            accessibleHelpText: a11yStrings.accelerationModeHelpStringProperty,
+          },
         },
       ],
       { orientation: "horizontal", spacing: MazeGameLayoutConstants.CONTROL_PANEL_TAB_SPACING, tandem },
@@ -143,12 +156,34 @@ export default class ControlPanel extends Panel {
     const pad = new Node({ children: [padBackground, padLayer] });
     pad.accessibleName = a11yStrings.controlPadStringProperty;
 
+    const controlPadHelpTextProperty = createModeDependentHelpTextProperty(
+      model.controlModeProperty,
+      a11yStrings.controlPadHelpPositionStringProperty,
+      a11yStrings.controlPadHelpVelocityStringProperty,
+      a11yStrings.controlPadHelpAccelerationStringProperty,
+    );
+
     const content = new VBox({
       spacing: MazeGameLayoutConstants.CONTROL_PANEL_VBOX_SPACING,
       children: [header, tabs, pad],
     });
 
     super(content, panelOptions);
+
+    this.derivedProperties.push(controlPadHelpTextProperty);
+    pad.accessibleHelpText = controlPadHelpTextProperty;
+    pad.focusable = true;
+    pad.tagName = "div";
+    pad.ariaRole = "application";
+
+    this.padKeyboardListener = new KeyboardListener({
+      keys: [...MazeGameConstants.KEYBOARD_KEYS],
+      fireOnHold: true,
+      fire: (_event: KeyboardEvent | null, keysPressed: string): void => {
+        applyMazeGameKeyboardInput(model, keysPressed);
+      },
+    });
+    pad.addInputListener(this.padKeyboardListener);
 
     this.padLayerRef = padLayer;
     this.arrowRef = arrow;
@@ -267,10 +302,14 @@ export default class ControlPanel extends Panel {
   }
 
   public override dispose(): void {
+    for (const derivedProperty of this.derivedProperties) {
+      derivedProperty.dispose();
+    }
     this.reflectMultilink.dispose();
     this.controlModeBridgeProperty.dispose();
     this.padLayerRef.removeInputListener(this.padDragListener);
     this.padDragListener.dispose();
+    this.padKeyboardListener.dispose();
     super.dispose();
   }
 }

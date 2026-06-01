@@ -47,8 +47,15 @@ The sim has a single screen that lives for the app lifetime. Disposal is impleme
 
 ## Accessibility
 
-- PDOM: `pdomPlayAreaNode` → arena; `pdomControlAreaNode` → control panel, level selector, HUD, reset-all.
-- Win overlay uses `a11y.levelComplete`; HUD panel uses `a11y.hudPanel`.
+- **Screen summary**: `MazeGameScreenSummaryContent` describes the play area, control area, current details (level, mode, collisions, win), and interaction hints at the top of the PDOM.
+- **PDOM order**: `pdomPlayAreaNode` → arena; `pdomControlAreaNode` → control panel, level selector, HUD, info button, reset-all.
+- **Help text**: Mode-dependent `accessibleHelpText` on the particle, control pad, and mode tabs; static help on level selector and particle-trace preference.
+- **Dynamic names**: HUD time and collision displays use `PatternStringProperty` with live values.
+- **Alerts**: `MazeGameDescriber` announces collisions, wins, level changes, and control-mode changes via `addAccessibleResponse` / `utteranceQueue`.
+- **Movement alerts**: `MovementAlerter` on particle drag end announces direction and arena border contact.
+- **Control pad focus**: Pad is focusable (`ariaRole: application`) with a local `KeyboardListener` delegating to shared `applyMazeGameKeyboardInput`.
+- **Keyboard help**: Custom particle section in the keyboard-help dialog.
+- **Manual testing**: `?ea`, `?stringTest=double|long`, Tab through PDOM, screen reader for dynamic values and alerts.
 
 ## Internationalization
 

@@ -71,13 +71,38 @@ export type KeyboardHelpStrings = {
   readonly stopMotionDescriptionStringProperty: TReadOnlyProperty<string>;
 };
 
+export type A11yScreenSummaryStrings = {
+  readonly playAreaStringProperty: TReadOnlyProperty<string>;
+  readonly controlAreaStringProperty: TReadOnlyProperty<string>;
+  readonly interactionHintStringProperty: TReadOnlyProperty<string>;
+  readonly currentLevelPatternStringProperty: TReadOnlyProperty<string>;
+  readonly currentModePatternStringProperty: TReadOnlyProperty<string>;
+  readonly collisionCountPatternStringProperty: TReadOnlyProperty<string>;
+  readonly wonStatusStringProperty: TReadOnlyProperty<string>;
+};
+
 export type A11yStrings = {
   readonly controlPadStringProperty: TReadOnlyProperty<string>;
+  readonly controlPadHelpPositionStringProperty: TReadOnlyProperty<string>;
+  readonly controlPadHelpVelocityStringProperty: TReadOnlyProperty<string>;
+  readonly controlPadHelpAccelerationStringProperty: TReadOnlyProperty<string>;
   readonly particleStringProperty: TReadOnlyProperty<string>;
-  readonly timeDisplayStringProperty: TReadOnlyProperty<string>;
-  readonly collisionsDisplayStringProperty: TReadOnlyProperty<string>;
+  readonly particleHelpPositionStringProperty: TReadOnlyProperty<string>;
+  readonly particleHelpVelocityStringProperty: TReadOnlyProperty<string>;
+  readonly particleHelpAccelerationStringProperty: TReadOnlyProperty<string>;
+  readonly timeDisplayPatternStringProperty: TReadOnlyProperty<string>;
+  readonly collisionsDisplayPatternStringProperty: TReadOnlyProperty<string>;
   readonly hudPanelStringProperty: TReadOnlyProperty<string>;
   readonly levelCompleteStringProperty: TReadOnlyProperty<string>;
+  readonly collisionAlertStringProperty: TReadOnlyProperty<string>;
+  readonly levelCompleteAlertStringProperty: TReadOnlyProperty<string>;
+  readonly levelChangedPatternStringProperty: TReadOnlyProperty<string>;
+  readonly controlModeChangedPatternStringProperty: TReadOnlyProperty<string>;
+  readonly levelSelectorHelpStringProperty: TReadOnlyProperty<string>;
+  readonly positionModeHelpStringProperty: TReadOnlyProperty<string>;
+  readonly velocityModeHelpStringProperty: TReadOnlyProperty<string>;
+  readonly accelerationModeHelpStringProperty: TReadOnlyProperty<string>;
+  readonly screenSummary: A11yScreenSummaryStrings;
 };
 
 export class StringManager {

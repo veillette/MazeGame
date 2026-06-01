@@ -30,8 +30,9 @@ import { collect_mp3, SoundClip, selectionArpeggio001_mp3, soundManager, wallCon
 import type { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
+import MazeGameDescriber from "../a11y/MazeGameDescriber.js";
+import { applyMazeGameKeyboardInput } from "../keyboard/applyMazeGameKeyboardInput.js";
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
-import { ControlMode } from "../model/ControlMode.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
 import type { MazeGameModel } from "../model/MazeGameModel.js";
 import ArenaNode from "./ArenaNode.js";
@@ -39,21 +40,9 @@ import ControlPanel from "./ControlPanel.js";
 import HudNode from "./HudNode.js";
 import LevelSelector from "./LevelSelector.js";
 import MazeGameInfoDialog from "./MazeGameInfoDialog.js";
+import MazeGameScreenSummaryContent from "./MazeGameScreenSummaryContent.js";
 
 type MazeGameScreenViewOptions = ScreenViewOptions & { tandem: Tandem };
-
-type AxisKey = keyof typeof MazeGameConstants.KEYBOARD_AXIS_BY_KEY;
-
-function isAxisKey(key: string): key is AxisKey {
-  return key in MazeGameConstants.KEYBOARD_AXIS_BY_KEY;
-}
-
-function axisForKey(key: string): readonly [number, number] | null {
-  if (!isAxisKey(key)) {
-    return null;
-  }
-  return MazeGameConstants.KEYBOARD_AXIS_BY_KEY[key];
-}
 
 type ArenaLayout = {
   modelViewTransform: ModelViewTransform2;
@@ -103,6 +92,8 @@ export class MazeGameScreenView extends ScreenView {
   private readonly resetAllButton: ResetAllButton;
   private readonly infoButton: InfoButton;
   private readonly infoDialog: MazeGameInfoDialog;
+  private readonly screenSummaryContentRef: MazeGameScreenSummaryContent;
+  private readonly mazeGameDescriber: MazeGameDescriber;
   private readonly keyboardListener: ReturnType<typeof KeyboardListener.createGlobal>;
   private readonly collisionSound: SoundClip;
   private readonly winSound: SoundClip;
@@ -187,6 +178,10 @@ export class MazeGameScreenView extends ScreenView {
       tandem: options.tandem.createTandem("infoButton"),
     });
 
+    this.screenSummaryContentRef = new MazeGameScreenSummaryContent(model);
+    this.setScreenSummaryContent(this.screenSummaryContentRef);
+    this.mazeGameDescriber = new MazeGameDescriber(model, this);
+
     this.children = [
       this.arenaNode,
       this.controlPanel,
@@ -212,46 +207,7 @@ export class MazeGameScreenView extends ScreenView {
       keys: [...MazeGameConstants.KEYBOARD_KEYS],
       fireOnHold: true,
       fire: (_event: KeyboardEvent | null, keysPressed: string): void => {
-        if (model.wonProperty.value) {
-          return;
-        }
-
-        const activeKeys = keysPressed.split("+");
-        const mode = model.controlModeProperty.value;
-
-        if (activeKeys.includes(MazeGameConstants.KEYBOARD_STOP_KEY)) {
-          if (mode === ControlMode.VELOCITY) {
-            model.particle.setVelocityXY(0, 0);
-          } else if (mode === ControlMode.ACCELERATION) {
-            model.particle.setAccelerationXY(0, 0);
-          }
-          return;
-        }
-
-        let dx = 0;
-        let dy = 0;
-        for (const key of activeKeys) {
-          const axis = axisForKey(key);
-          if (axis) {
-            dx += axis[0];
-            dy += axis[1];
-          }
-        }
-        if (dx === 0 && dy === 0) {
-          return;
-        }
-
-        if (mode === ControlMode.POSITION) {
-          const step = MazeGameConstants.KEYBOARD_POSITION_STEP;
-          const p = model.particle.position;
-          model.particle.setPositionXY(p.x + dx * step, p.y + dy * step);
-        } else if (mode === ControlMode.VELOCITY) {
-          const m = MazeGameConstants.KEYBOARD_VELOCITY_MAGNITUDE;
-          model.particle.setVelocityXY(dx * m, dy * m);
-        } else {
-          const m = MazeGameConstants.KEYBOARD_ACCELERATION_MAGNITUDE;
-          model.particle.setAccelerationXY(dx * m, dy * m);
-        }
+        applyMazeGameKeyboardInput(model, keysPressed);
       },
     });
 
@@ -285,6 +241,10 @@ export class MazeGameScreenView extends ScreenView {
     this.modeSound.dispose();
 
     this.keyboardListener.dispose();
+
+    this.mazeGameDescriber.dispose();
+    this.setScreenSummaryContent(null);
+    this.screenSummaryContentRef.dispose();
 
     this.hudNode.dispose();
     this.levelSelector.dispose();
