@@ -8,7 +8,7 @@
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
-import { Circle, Color, Node, Path, Pattern, RadialGradient } from "scenerystack/scenery";
+import { Circle, Color, Node, Path, Pattern, RadialGradient, VoicingNode } from "scenerystack/scenery";
 import { StarShape } from "scenerystack/scenery-phet";
 import MazeGameColors, { TRANSPARENT_COLOR } from "../../MazeGameColors.js";
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
@@ -115,7 +115,7 @@ export function createParticleGlowFill(radiusView: number): RadialGradient {
 }
 
 export type ParticleVisualNodes = {
-  readonly root: Node;
+  readonly root: VoicingNode;
   readonly glow: Circle;
   readonly body: Circle;
   readonly specular: Circle;
@@ -140,7 +140,7 @@ export function createParticleVisual(radiusView: number): ParticleVisualNodes {
     centerY: -radiusView * MazeGameLayoutConstants.ARENA_PARTICLE_SPECULAR_OFFSET_Y_RATIO,
     pickable: false,
   });
-  const root = new Node({ children: [glow, body, specular] });
+  const root = new VoicingNode({ children: [glow, body, specular] });
   return { root, glow, body, specular };
 }
 

@@ -13,8 +13,9 @@ import { Bounds2, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import type { ModelViewTransform2 } from "scenerystack/phetcommon";
 import type { SceneryEvent } from "scenerystack/scenery";
-import { Circle, type Color, DragListener, LinearGradient, Node, Path, Rectangle, Text } from "scenerystack/scenery";
-import { ArrowNode, MovementAlerter, PhetFont } from "scenerystack/scenery-phet";
+import { Circle, type Color, LinearGradient, Node, Path, Rectangle, Text } from "scenerystack/scenery";
+import { ArrowNode, MovementAlerter, PhetFont, SoundDragListener } from "scenerystack/scenery-phet";
+import { Animation, Easing } from "scenerystack/twixt";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors, { TRANSPARENT_COLOR } from "../../MazeGameColors.js";
 import { createModeDependentHelpTextProperty } from "../a11y/createA11yDerivedProperties.js";
@@ -45,15 +46,15 @@ export default class ArenaNode extends Node {
   private readonly velocityArrow: ArrowNode;
   private readonly accelerationArrow: ArrowNode;
   private traceModelPoints: Vector2[] = [];
-  private pulseTime = 0;
   private flickerTime = 0;
   private finishCenter = new Vector2(0, 0);
   private tileSizeView = 0;
   private velocityArrowScale = 0;
   private accelerationArrowScale = 0;
   private readonly modelRef: MazeGameModel;
+  private readonly winPulseAnimation: Animation;
 
-  private readonly particleDragListener: DragListener;
+  private readonly particleDragListener: SoundDragListener;
   private readonly movementAlerter: MovementAlerter;
   private readonly movementBoundsProperty: Property<Bounds2>;
   private readonly vectorMultilink: ReturnType<typeof Multilink.multilink>;
@@ -305,16 +306,6 @@ export default class ArenaNode extends Node {
     this.winRing.visibleProperty = winCelebrationVisibleProperty;
     this.goalText.visibleProperty = winCelebrationVisibleProperty;
 
-    model.wonProperty.link(
-      (won): void => {
-        if (won) {
-          this.pulseTime = 0;
-          this.clearTrace();
-        }
-      },
-      { disposer: this },
-    );
-
     this.tracePath = new Path(null, {
       stroke: MazeGameColors.particleTraceColorProperty,
       lineWidth: MazeGameLayoutConstants.ARENA_TRACE_LINE_WIDTH,
@@ -326,6 +317,9 @@ export default class ArenaNode extends Node {
 
     this.particleVisual = createParticleVisual(1);
     this.particleVisual.root.accessibleName = a11yStrings.particleStringProperty;
+    this.particleVisual.root.focusable = true;
+    this.particleVisual.root.tagName = "button";
+    this.particleVisual.root.voicingNameResponse = a11yStrings.particleStringProperty;
 
     const particleHelpTextProperty = createModeDependentHelpTextProperty(
       model.controlModeProperty,
@@ -335,6 +329,7 @@ export default class ArenaNode extends Node {
     );
     this.derivedProperties.push(particleHelpTextProperty);
     this.particleVisual.root.accessibleHelpText = particleHelpTextProperty;
+    this.particleVisual.root.voicingHintResponse = particleHelpTextProperty;
 
     const halfWidth = MazeGameConstants.LEVEL_MODEL_WIDTH / 2;
     const halfHeight = MazeGameConstants.LEVEL_MODEL_HEIGHT / 2;
@@ -342,7 +337,7 @@ export default class ArenaNode extends Node {
     this.derivedProperties.push(this.movementBoundsProperty);
 
     this.movementAlerter = new MovementAlerter(model.particle.positionProperty, {
-      alertToVoicing: false,
+      alertToVoicing: true,
       descriptionAlertNode: this.particleVisual.root,
       modelViewTransform,
       borderAlertsOptions: {
@@ -365,8 +360,8 @@ export default class ArenaNode extends Node {
     this.particleVisual.body.pickableProperty = dragEnabledProperty;
     dragEnabledProperty.link(this.updateDragCursor, { disposer: this });
 
-    this.particleDragListener = new DragListener({
-      drag: (event: SceneryEvent, _listener: DragListener): void => {
+    this.particleDragListener = new SoundDragListener({
+      drag: (event: SceneryEvent): void => {
         if (model.wonProperty.value || model.controlModeProperty.value !== ControlMode.POSITION) {
           return;
         }
@@ -383,6 +378,47 @@ export default class ArenaNode extends Node {
       },
     });
     this.particleVisual.body.addInputListener(this.particleDragListener);
+
+    const winPulseMinScale = MazeGameLayoutConstants.ARENA_WIN_PULSE_MIN_SCALE;
+    const winPulseMaxScale = MazeGameLayoutConstants.ARENA_WIN_PULSE_MAX_SCALE;
+    this.winPulseAnimation = new Animation({
+      duration: MazeGameConstants.WIN_PULSE_DURATION,
+      easing: Easing.LINEAR,
+      setValue: (progress: number): void => {
+        const scale = winPulseMinScale + (winPulseMaxScale - winPulseMinScale) * progress;
+        this.winRing.setScaleMagnitude(scale);
+        this.winRing.opacity = 1 - progress;
+        this.winRing.center = this.finishCenter;
+      },
+      from: 0,
+      to: 1,
+    });
+    this.winPulseAnimation.finishEmitter.addListener((): void => {
+      if (!model.wonProperty.value) {
+        return;
+      }
+      this.winRing.setScaleMagnitude(winPulseMinScale);
+      this.winRing.opacity = 1;
+      this.winRing.center = this.finishCenter;
+      this.winPulseAnimation.start();
+    });
+
+    model.wonProperty.link(
+      (won): void => {
+        if (won) {
+          this.clearTrace();
+          this.winRing.setScaleMagnitude(winPulseMinScale);
+          this.winRing.opacity = 1;
+          this.winRing.center = this.finishCenter;
+          this.winPulseAnimation.start();
+        } else {
+          this.winPulseAnimation.stop();
+          this.winRing.setScaleMagnitude(winPulseMinScale);
+          this.winRing.opacity = 1;
+        }
+      },
+      { disposer: this },
+    );
 
     this.velocityArrow = new ArrowNode(0, 0, 1, 0, {
       headWidth: MazeGameLayoutConstants.ARENA_ARROW_HEAD_WIDTH,
@@ -479,11 +515,12 @@ export default class ArenaNode extends Node {
     this.wallColorMultilink.dispose();
     this.particleVisual.body.removeInputListener(this.particleDragListener);
     this.particleDragListener.dispose();
+    this.winPulseAnimation.dispose();
     super.dispose();
   }
 
   /**
-   * Advance the collision-flicker and win-pulse animations.
+   * Advance the collision-flicker animation.
    * Called from MazeGameScreenView.step(dt) every animation frame.
    */
   public step(dt: number): void {
@@ -496,18 +533,5 @@ export default class ArenaNode extends Node {
       this.flickerTime = 0;
       this.particleVisual.root.opacity = 1;
     }
-
-    if (!this.modelRef.wonProperty.value) {
-      return;
-    }
-    const duration = MazeGameConstants.WIN_PULSE_DURATION;
-    this.pulseTime = (this.pulseTime + dt) % duration;
-    const t = this.pulseTime / duration;
-    const scale =
-      MazeGameLayoutConstants.ARENA_WIN_PULSE_MIN_SCALE +
-      (MazeGameLayoutConstants.ARENA_WIN_PULSE_MAX_SCALE - MazeGameLayoutConstants.ARENA_WIN_PULSE_MIN_SCALE) * t;
-    this.winRing.setScaleMagnitude(scale);
-    this.winRing.center = this.finishCenter;
-    this.winRing.opacity = 1 - t;
   }
 }

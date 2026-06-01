@@ -38,6 +38,7 @@ onReadyToLaunch(() => {
       },
       audioOptions: {
         supportsSound: true,
+        supportsVoicing: true,
       },
       localizationOptions: {
         supportsDynamicLocale: true,

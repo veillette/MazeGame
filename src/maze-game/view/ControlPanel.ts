@@ -15,7 +15,7 @@ import { Bounds2, clamp, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import { optionize } from "scenerystack/phet-core";
 import type { OneKeyStroke, ProfileColorProperty } from "scenerystack/scenery";
-import { Circle, DragListener, KeyboardListener, Node, Rectangle, Text, VBox } from "scenerystack/scenery";
+import { Circle, DragListener, KeyboardListener, Node, Rectangle, Text, VBox, VoicingNode } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Panel, type PanelOptions, RectangularRadioButtonGroup } from "scenerystack/sun";
 import { Tandem } from "scenerystack/tandem";
@@ -153,8 +153,6 @@ export default class ControlPanel extends Panel {
       children: [arrow, knob],
       cursor: "pointer",
     });
-    const pad = new Node({ children: [padBackground, padLayer] });
-    pad.accessibleName = a11yStrings.controlPadStringProperty;
 
     const controlPadHelpTextProperty = createModeDependentHelpTextProperty(
       model.controlModeProperty,
@@ -162,6 +160,17 @@ export default class ControlPanel extends Panel {
       a11yStrings.controlPadHelpVelocityStringProperty,
       a11yStrings.controlPadHelpAccelerationStringProperty,
     );
+
+    const pad = new VoicingNode({
+      children: [padBackground, padLayer],
+      accessibleName: a11yStrings.controlPadStringProperty,
+      accessibleHelpText: controlPadHelpTextProperty,
+      voicingNameResponse: a11yStrings.controlPadStringProperty,
+      voicingHintResponse: controlPadHelpTextProperty,
+      focusable: true,
+      tagName: "div",
+      ariaRole: "application",
+    });
 
     const content = new VBox({
       spacing: MazeGameLayoutConstants.CONTROL_PANEL_VBOX_SPACING,
@@ -171,10 +180,6 @@ export default class ControlPanel extends Panel {
     super(content, panelOptions);
 
     this.derivedProperties.push(controlPadHelpTextProperty);
-    pad.accessibleHelpText = controlPadHelpTextProperty;
-    pad.focusable = true;
-    pad.tagName = "div";
-    pad.ariaRole = "application";
 
     this.padKeyboardListener = new KeyboardListener({
       keys: [...MazeGameConstants.KEYBOARD_KEYS],

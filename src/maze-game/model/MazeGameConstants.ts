@@ -59,6 +59,13 @@ const MazeGameConstants = {
   SOUND_COLLISION_OUTPUT_LEVEL: 0.5,
   SOUND_WIN_OUTPUT_LEVEL: 0.7,
   SOUND_MODE_OUTPUT_LEVEL: 0.3,
+  SOUND_VELOCITY_SONIFICATION_OUTPUT_LEVEL: 0.25,
+
+  // Upper bound (m/s) for mapping velocity magnitude to sonification playback rate.
+  VELOCITY_SONIFICATION_MAX: 8,
+
+  // Wall-collision haptic pulse duration in milliseconds (Web Vibration API).
+  COLLISION_VIBRATION_MS: 50,
 
   // Side length (px) of the square drag-pad inside the control panel.
   REMOTE_PAD_SIZE: 160,

@@ -20,13 +20,22 @@
  * built-in tambo SoundClips.
  */
 
-import { Bounds2, Vector2 } from "scenerystack/dot";
+import type { TReadOnlyProperty } from "scenerystack/axon";
+import { Bounds2, Range, Vector2 } from "scenerystack/dot";
 import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import { ModelViewTransform2 } from "scenerystack/phetcommon";
 import { KeyboardListener } from "scenerystack/scenery";
 import { InfoButton, ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
-import { collect_mp3, SoundClip, selectionArpeggio001_mp3, soundManager, wallContact_mp3 } from "scenerystack/tambo";
+import {
+  ContinuousPropertySoundClip,
+  collect_mp3,
+  SoundClip,
+  saturatedSineLoop220Hz_mp3,
+  selectionArpeggio001_mp3,
+  soundManager,
+  wallContact_mp3,
+} from "scenerystack/tambo";
 import type { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
@@ -35,6 +44,10 @@ import { applyMazeGameKeyboardInput } from "../keyboard/applyMazeGameKeyboardInp
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
 import type { MazeGameModel } from "../model/MazeGameModel.js";
+import {
+  createVelocityMagnitudeSonificationProperty,
+  velocitySonificationRange,
+} from "../sound/createSonificationProperties.js";
 import ArenaNode from "./ArenaNode.js";
 import ControlPanel from "./ControlPanel.js";
 import HudNode from "./HudNode.js";
@@ -98,6 +111,8 @@ export class MazeGameScreenView extends ScreenView {
   private readonly collisionSound: SoundClip;
   private readonly winSound: SoundClip;
   private readonly modeSound: SoundClip;
+  private readonly velocitySonificationSound: ContinuousPropertySoundClip;
+  private readonly velocityMagnitudeSonificationProperty: TReadOnlyProperty<number>;
 
   private readonly playCollisionSound = (count: number, oldCount: number | null): void => {
     if (oldCount !== null && count > oldCount) {
@@ -226,6 +241,16 @@ export class MazeGameScreenView extends ScreenView {
     });
     soundManager.addSoundGenerator(this.modeSound);
     model.controlModeProperty.lazyLink(this.playModeSound, { disposer: this });
+
+    this.velocityMagnitudeSonificationProperty = createVelocityMagnitudeSonificationProperty(model);
+    const sonificationRange = velocitySonificationRange();
+    this.velocitySonificationSound = new ContinuousPropertySoundClip(
+      this.velocityMagnitudeSonificationProperty,
+      new Range(sonificationRange.min, sonificationRange.max),
+      saturatedSineLoop220Hz_mp3,
+      { initialOutputLevel: MazeGameConstants.SOUND_VELOCITY_SONIFICATION_OUTPUT_LEVEL },
+    );
+    soundManager.addSoundGenerator(this.velocitySonificationSound);
   }
 
   public override step(dt: number): void {
@@ -236,9 +261,12 @@ export class MazeGameScreenView extends ScreenView {
     soundManager.removeSoundGenerator(this.collisionSound);
     soundManager.removeSoundGenerator(this.winSound);
     soundManager.removeSoundGenerator(this.modeSound);
+    soundManager.removeSoundGenerator(this.velocitySonificationSound);
     this.collisionSound.dispose();
     this.winSound.dispose();
     this.modeSound.dispose();
+    this.velocitySonificationSound.dispose();
+    this.velocityMagnitudeSonificationProperty.dispose();
 
     this.keyboardListener.dispose();
 

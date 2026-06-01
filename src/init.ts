@@ -20,4 +20,5 @@ init({
   allowLocaleSwitching: true,
   colorProfiles: ["default", "projector"],
   supportsSound: true,
+  supportsVoicing: true,
 });

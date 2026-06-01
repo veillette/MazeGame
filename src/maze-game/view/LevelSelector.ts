@@ -91,6 +91,8 @@ export default class LevelSelector extends Panel {
           deselectedColor: MazeGameColors.levelButtonUnselectedColorProperty,
           centerColor: MazeGameColors.foregroundColorProperty,
         },
+        accessibleHelpText: StringManager.getInstance().getA11yStrings().levelSelectorHelpStringProperty,
+        voicingHintResponse: StringManager.getInstance().getA11yStrings().levelSelectorHelpStringProperty,
         tandem,
       },
     );
