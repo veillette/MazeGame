@@ -38,6 +38,18 @@ const FOCUS_HIGHLIGHT_CLASS = "a11y-view-focus-highlight";
 /** @type {HTMLElement | null} */
 let relationshipLookupRoot = null;
 
+/** @type {boolean} */
+let a11yViewInitialized = false;
+
+/**
+ * Cross-frame-safe element check (iframe nodes fail parent `instanceof HTMLElement`).
+ * @param {unknown} value
+ * @returns {value is HTMLElement}
+ */
+function isDomElement(value) {
+  return typeof value === "object" && value !== null && /** @type {{ nodeType?: number }} */ (value).nodeType === 1;
+}
+
 /**
  * @returns {string}
  */
@@ -61,12 +73,12 @@ function buildSimUrl() {
 function getAllElements(ancestor) {
   /** @type {HTMLElement[]} */
   const elements = [];
-  if (ancestor instanceof HTMLElement) {
+  if (isDomElement(ancestor)) {
     elements.push(ancestor);
   }
   const descendants = ancestor.querySelectorAll("*");
   for (const element of descendants) {
-    if (element instanceof HTMLElement) {
+    if (isDomElement(element)) {
       elements.push(element);
     }
   }
@@ -138,7 +150,7 @@ function addInlineAttributes(rootNode) {
       element.removeAttribute("style");
 
       if (element.tagName.toLowerCase() === "input") {
-        if (element instanceof HTMLInputElement && element.type === "button") {
+        if (element.getAttribute("type") === "button") {
           element.setAttribute("value", ariaLabel);
         } else {
           const labelElement = document.createElement("label");
@@ -233,15 +245,21 @@ function addPdomObserver(pdomRoot, container) {
  * @param {HTMLElement} alertContainer
  */
 function addLiveObserver(originalElement, listElement, alertContainer) {
+  /** @type {string} */
+  let lastLoggedText = "";
+
   const liveObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
-      if (mutation.addedNodes.length === 0) {
-        continue;
-      }
-      const alertText = mutation.target.textContent ?? "";
+      const alertText = (mutation.target.textContent ?? "").trim();
       if (alertText.length === 0) {
+        lastLoggedText = "";
         continue;
       }
+
+      if (alertText === lastLoggedText) {
+        continue;
+      }
+      lastLoggedText = alertText;
 
       const target = /** @type {HTMLElement} */ (mutation.target);
       const responseCategory = target.dataset.responseCategory?.toLowerCase() ?? "other";
@@ -352,7 +370,7 @@ function wireFocusHighlight(iframe) {
     const activeElement = iframeDocument.activeElement;
     previousElement = activeElement;
     const isDocumentBody = activeElement === iframeDocument.body;
-    if (activeElement && !isDocumentBody && activeElement instanceof HTMLElement) {
+    if (activeElement && !isDocumentBody && isDomElement(activeElement)) {
       activeElement.classList.add(FOCUS_HIGHLIGHT_CLASS);
     }
   };
@@ -361,9 +379,38 @@ function wireFocusHighlight(iframe) {
 }
 
 /**
+ * @param {Window} innerWindow
+ * @param {number} maxAttempts
+ * @returns {Promise<HTMLElement | null>}
+ */
+function waitForPdomRoot(innerWindow, maxAttempts = 200) {
+  return new Promise((resolve) => {
+    let attempts = 0;
+
+    const check = () => {
+      const pdomRoot = innerWindow.phet?.joist?.display?.pdomRootElement;
+      if (isDomElement(pdomRoot)) {
+        resolve(pdomRoot);
+        return;
+      }
+
+      attempts++;
+      if (attempts >= maxAttempts) {
+        resolve(null);
+        return;
+      }
+
+      setTimeout(check, 50);
+    };
+
+    check();
+  });
+}
+
+/**
  * @param {MessageEvent} event
  */
-function handleSimLoadMessage(event) {
+async function handleSimLoadMessage(event) {
   if (!event.data) {
     return;
   }
@@ -380,6 +427,10 @@ function handleSimLoadMessage(event) {
     return;
   }
 
+  if (a11yViewInitialized) {
+    return;
+  }
+
   const iframe = document.getElementById("iframe");
   if (!(iframe instanceof HTMLIFrameElement)) {
     return;
@@ -390,12 +441,13 @@ function handleSimLoadMessage(event) {
     return;
   }
 
-  const phet = innerWindow.phet;
-  const pdomRoot = phet?.joist?.display?.pdomRootElement;
-  if (!(pdomRoot instanceof HTMLElement)) {
+  const pdomRoot = await waitForPdomRoot(innerWindow);
+  if (!isDomElement(pdomRoot)) {
     console.error("A11y View: pdomRootElement not found — is supportsInteractiveDescription enabled?");
     return;
   }
+
+  a11yViewInitialized = true;
 
   relationshipLookupRoot = pdomRoot;
 
@@ -406,16 +458,12 @@ function handleSimLoadMessage(event) {
   const invalidateView = addPdomObserver(pdomRoot, pdomCopyContainer);
   patchCheckboxSetter(innerWindow, invalidateView);
 
-  const simDisplayQueue = phet?.joist?.sim?.display?.descriptionUtteranceQueue?.announcer?.ariaLiveContainer;
+  const ariaLiveContainer = innerWindow.phet?.joist?.display?.descriptionUtteranceQueue?.announcer?.ariaLiveContainer;
 
-  if (
-    alertList instanceof HTMLElement &&
-    alertContainer instanceof HTMLElement &&
-    simDisplayQueue instanceof HTMLElement
-  ) {
-    for (const child of simDisplayQueue.children) {
-      if (child instanceof HTMLElement) {
-        addLiveObserver(child, alertList, alertContainer);
+  if (alertList instanceof HTMLElement && alertContainer instanceof HTMLElement && isDomElement(ariaLiveContainer)) {
+    for (const liveElement of ariaLiveContainer.querySelectorAll("[aria-live]")) {
+      if (isDomElement(liveElement)) {
+        addLiveObserver(liveElement, alertList, alertContainer);
       }
     }
   }

@@ -33,7 +33,7 @@
   },
   "info": {
     "title": "Game Information",
-    "introduction": "Drive the red particle to the finish tile. Choose Position, Velocity, or Acceleration and use the control pad, drag the particle, or the arrow keys / WASD. Reach the goal with <b>zero wall collisions</b> to win.",
+    "introduction": "Drive the red particle to the finish tile. Choose Position, Velocity, or Acceleration and use the control pad or the arrow keys / WASD. Reach the goal with <b>zero wall collisions</b> to win.",
     "practiceDescription": "<b>Practice:</b> Open arena with no walls. Learn the controls.",
     "level1Description": "<b>Level 1:</b> A simple maze with a few walls.",
     "level2Description": "<b>Level 2:</b> A winding maze bounded by outer walls.",
@@ -52,7 +52,7 @@
     "controlPadHelpVelocity": "Drag the knob or use arrow keys to set velocity. Press Space to stop.",
     "controlPadHelpAcceleration": "Drag the knob or use arrow keys to set acceleration. Press Space to stop.",
     "particle": "Particle",
-    "particleHelpPosition": "Position mode. Drag to move or use arrow keys.",
+    "particleHelpPosition": "Position mode. Use the control pad or arrow keys to move the particle.",
     "particleHelpVelocity": "Velocity mode. Use the control pad or arrow keys to set velocity.",
     "particleHelpAcceleration": "Acceleration mode. Use the control pad or arrow keys to set acceleration.",
     "timeDisplayPattern": "Elapsed time, {{value}}",
@@ -69,7 +69,7 @@
     "accelerationModeHelp": "Sets particle acceleration. Press Space to stop motion.",
     "screenSummary": {
       "playArea": "Drive the red particle through the maze to the finish tile. Reach the goal with zero wall collisions to win.",
-      "controlArea": "Choose Position, Velocity, or Acceleration. Use the control pad, drag the particle, or arrow keys. Pick a level and track elapsed time and collisions.",
+      "controlArea": "Choose Position, Velocity, or Acceleration. Use the control pad or arrow keys. Pick a level and track elapsed time and collisions.",
       "interactionHint": "Arrow keys or W, A, S, D control the particle. Space stops motion in Velocity or Acceleration mode.",
       "currentLevelPattern": "Current level, {{level}}",
       "currentModePattern": "Control mode, {{mode}}",

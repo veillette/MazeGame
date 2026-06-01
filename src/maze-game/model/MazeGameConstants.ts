@@ -100,6 +100,12 @@ const MazeGameConstants = {
   // Minimum particle pointer target radius in view coordinates (44 px touch target).
   PARTICLE_MIN_TOUCH_RADIUS_VIEW: 22,
 
+  // Visible help callout when the user clicks the particle instead of using controls.
+  PARTICLE_HELP_CALLOUT_MAX_WIDTH: 260,
+  PARTICLE_HELP_CALLOUT_OFFSET_VIEW: 14,
+  PARTICLE_HELP_VISIBLE_DURATION_MS: 3000,
+  PARTICLE_HELP_FADE_DURATION: 0.4,
+
   // Shared Panel chrome for right-column UI (ControlPanel, LevelSelector, HudNode).
   PANEL_CORNER_RADIUS: 6,
   PANEL_X_MARGIN: 12,

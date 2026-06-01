@@ -172,17 +172,87 @@ ul.alert_copy {
 }
 
 .dom_copy_container .pdom-style {
-  opacity: 0.55;
-  display: inline-block;
+  opacity: 0.7;
+  display: block;
   padding-left: 1em;
-  margin: 0;
-  font-size: 0.9em;
+  margin: 0.15em 0;
+  font-size: 0.85em;
+  font-style: italic;
+  color: #444;
 }
 
 #pdom-copy {
   background: #fff;
   padding: 0.75em;
   border-radius: 0.5em;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+/* Cloned PDOM nodes keep iframe-origin classes; undo off-screen sim layout for reading. */
+#pdom-copy,
+#pdom-copy * {
+  position: static !important;
+  clip: auto !important;
+  clip-path: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  white-space: normal !important;
+  pointer-events: none;
+}
+
+#pdom-copy .pdom-style {
+  opacity: 0.7 !important;
+  pointer-events: none;
+}
+
+#pdom-copy .a11y-pdom-element,
+#pdom-copy .a11y-pdom-root {
+  display: block;
+  font-size: inherit !important;
+}
+
+#pdom-copy h1,
+#pdom-copy h2,
+#pdom-copy h3,
+#pdom-copy h4 {
+  margin: 0.75em 0 0.35em;
+  font-size: inherit;
+  font-weight: bold;
+}
+
+#pdom-copy p,
+#pdom-copy li,
+#pdom-copy button,
+#pdom-copy input,
+#pdom-copy label {
+  margin: 0.35em 0;
+}
+
+#pdom-copy li {
+  list-style: disc;
+  margin-left: 1.25em;
+}
+
+#pdom-copy button,
+#pdom-copy input[type="button"],
+#pdom-copy input[type="radio"],
+#pdom-copy input[type="checkbox"] {
+  pointer-events: none;
+}
+
+#pdom-copy button,
+#pdom-copy input[type="button"] {
+  border: 1px solid #999;
+  padding: 0.2em 0.5em;
+  background: #f5f5f5;
 }
 
 button#clear-activity-log-button {

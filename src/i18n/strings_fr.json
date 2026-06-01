@@ -33,7 +33,7 @@
   },
   "info": {
     "title": "Informations sur le jeu",
-    "introduction": "Dirigez la particule rouge vers la case d'arrivée. Choisissez Position, Vitesse ou Accélération et utilisez le panneau de contrôle, faites glisser la particule ou les flèches / Z, Q, S, D. Atteignez le but avec <b>zéro collision</b> pour gagner.",
+    "introduction": "Dirigez la particule rouge vers la case d'arrivée. Choisissez Position, Vitesse ou Accélération et utilisez le panneau de contrôle ou les flèches / Z, Q, S, D. Atteignez le but avec <b>zéro collision</b> pour gagner.",
     "practiceDescription": "<b>Entraînement :</b> Arène ouverte sans murs. Apprenez les contrôles.",
     "level1Description": "<b>Niveau 1 :</b> Un labyrinthe simple avec quelques murs.",
     "level2Description": "<b>Niveau 2 :</b> Un labyrinthe sinueux entouré de murs.",
@@ -52,7 +52,7 @@
     "controlPadHelpVelocity": "Faites glisser le bouton ou utilisez les flèches pour régler la vitesse. Espace pour arrêter.",
     "controlPadHelpAcceleration": "Faites glisser le bouton ou utilisez les flèches pour régler l'accélération. Espace pour arrêter.",
     "particle": "Particule",
-    "particleHelpPosition": "Mode Position. Faites glisser ou utilisez les flèches.",
+    "particleHelpPosition": "Mode Position. Utilisez le panneau de contrôle ou les flèches.",
     "particleHelpVelocity": "Mode Vitesse. Utilisez le panneau de contrôle ou les flèches.",
     "particleHelpAcceleration": "Mode Accélération. Utilisez le panneau de contrôle ou les flèches.",
     "timeDisplayPattern": "Temps écoulé, {{value}}",
@@ -69,7 +69,7 @@
     "accelerationModeHelp": "Définit l'accélération de la particule. Espace pour arrêter le mouvement.",
     "screenSummary": {
       "playArea": "Dirigez la particule rouge dans le labyrinthe jusqu'à la case d'arrivée. Atteignez le but sans aucune collision pour gagner.",
-      "controlArea": "Choisissez Position, Vitesse ou Accélération. Utilisez le panneau de contrôle, faites glisser la particule ou les flèches. Choisissez un niveau et suivez le temps et les collisions.",
+      "controlArea": "Choisissez Position, Vitesse ou Accélération. Utilisez le panneau de contrôle ou les flèches. Choisissez un niveau et suivez le temps et les collisions.",
       "interactionHint": "Les flèches ou W, A, S, D contrôlent la particule. Espace arrête le mouvement en mode Vitesse ou Accélération.",
       "currentLevelPattern": "Niveau actuel, {{level}}",
       "currentModePattern": "Mode de contrôle, {{mode}}",

@@ -8,18 +8,30 @@
  * step(dt) advances the collision-flicker animation and the win-pulse ring.
  */
 
-import { DerivedProperty, Multilink, Property } from "scenerystack/axon";
-import { Bounds2, Vector2 } from "scenerystack/dot";
+import { DerivedProperty, Multilink, stepTimer, type TimerListener } from "scenerystack/axon";
+import { type Bounds2, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import type { ModelViewTransform2 } from "scenerystack/phetcommon";
-import type { SceneryEvent } from "scenerystack/scenery";
-import { Circle, type Color, LinearGradient, Node, Path, Rectangle, Text } from "scenerystack/scenery";
-import { ArrowNode, PhetFont, SoundDragListener } from "scenerystack/scenery-phet";
+import {
+  Circle,
+  type Color,
+  FireListener,
+  isVoicing,
+  LinearGradient,
+  Node,
+  Path,
+  Rectangle,
+  Text,
+  voicingUtteranceQueue,
+} from "scenerystack/scenery";
+import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
+import { Panel } from "scenerystack/sun";
+import { Tandem } from "scenerystack/tandem";
 import { Animation, Easing } from "scenerystack/twixt";
+import { Utterance } from "scenerystack/utterance-queue";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors, { TRANSPARENT_COLOR } from "../../MazeGameColors.js";
 import { createModeDependentHelpTextProperty } from "../a11y/createA11yDerivedProperties.js";
-import MazeGameMovementAlerter from "../a11y/MazeGameMovementAlerter.js";
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 import { particleTraceEnabledProperty } from "../MazeGamePreferences.js";
 import { ControlMode } from "../model/ControlMode.js";
@@ -55,10 +67,11 @@ export default class ArenaNode extends Node {
   private readonly modelRef: MazeGameModel;
   private readonly winPulseAnimation: Animation;
 
-  private readonly particleDragListener: SoundDragListener;
-  private readonly movementAlerter: MazeGameMovementAlerter;
-  private particleDragAlertPending = false;
-  private readonly movementBoundsProperty: Property<Bounds2>;
+  private readonly particlePressListener: FireListener;
+  private readonly particleControlHelpTextProperty: ReturnType<typeof createModeDependentHelpTextProperty>;
+  private readonly particleHelpCallout: Panel;
+  private readonly particleHelpFadeAnimation: Animation;
+  private particleHelpHideTimeout: TimerListener | null = null;
   private readonly vectorMultilink: ReturnType<typeof Multilink.multilink>;
   private readonly wallColorMultilink: ReturnType<typeof Multilink.multilink>;
   private readonly derivedProperties: Array<{ dispose(): void }> = [];
@@ -117,6 +130,13 @@ export default class ArenaNode extends Node {
 
   private readonly syncParticlePosition = (position: Vector2): void => {
     this.particleVisual.root.translation = this.levelLayoutRefs.modelViewTransform.modelToViewPosition(position);
+    this.syncHelpCalloutPosition();
+  };
+
+  private readonly syncHelpCalloutPosition = (): void => {
+    const particleCenter = this.particleVisual.root.translation;
+    const offset = MazeGameConstants.PARTICLE_HELP_CALLOUT_OFFSET_VIEW;
+    this.particleHelpCallout.centerBottom = new Vector2(particleCenter.x, particleCenter.y - offset);
   };
 
   private readonly updateParticlePointerTarget = (): void => {
@@ -138,13 +158,47 @@ export default class ArenaNode extends Node {
       -particleRadiusView * MazeGameLayoutConstants.ARENA_PARTICLE_SPECULAR_OFFSET_X_RATIO;
     this.particleVisual.specular.centerY =
       -particleRadiusView * MazeGameLayoutConstants.ARENA_PARTICLE_SPECULAR_OFFSET_Y_RATIO;
-    this.particleVisual.body.mouseArea = Shape.circle(0, 0, particleRadiusView);
-    this.particleVisual.body.touchArea = Shape.circle(0, 0, touchRadius);
+    const touchShape = Shape.circle(0, 0, touchRadius);
+    this.particleVisual.root.mouseArea = touchShape;
+    this.particleVisual.root.touchArea = touchShape;
     this.syncParticlePosition(this.modelRef.particle.position);
   };
 
-  private readonly updateDragCursor = (enabled: boolean): void => {
-    this.particleVisual.body.cursor = enabled ? "pointer" : "default";
+  private readonly hideParticleHelpCallout = (): void => {
+    if (this.particleHelpHideTimeout !== null) {
+      stepTimer.clearTimeout(this.particleHelpHideTimeout);
+      this.particleHelpHideTimeout = null;
+    }
+    this.particleHelpFadeAnimation.stop();
+    this.particleHelpCallout.visible = false;
+    this.particleHelpCallout.opacity = 1;
+  };
+
+  private readonly announceParticleControlHelp = (): void => {
+    if (this.modelRef.wonProperty.value) {
+      return;
+    }
+
+    this.syncHelpCalloutPosition();
+    this.particleHelpCallout.visible = true;
+    this.particleHelpCallout.opacity = 1;
+    this.particleHelpFadeAnimation.stop();
+
+    if (this.particleHelpHideTimeout !== null) {
+      stepTimer.clearTimeout(this.particleHelpHideTimeout);
+    }
+    this.particleHelpHideTimeout = stepTimer.setTimeout((): void => {
+      this.particleHelpHideTimeout = null;
+      this.particleHelpFadeAnimation.start();
+    }, MazeGameConstants.PARTICLE_HELP_VISIBLE_DURATION_MS);
+
+    this.particleVisual.root.addAccessibleHelpResponse(this.particleControlHelpTextProperty);
+    voicingUtteranceQueue.addToBack(new Utterance({ alert: this.particleControlHelpTextProperty }));
+    if (isVoicing(this.particleVisual.root)) {
+      this.particleVisual.root.voicingSpeakContextResponse({
+        contextResponse: this.particleControlHelpTextProperty,
+      });
+    }
   };
 
   private readonly clearTrace = (): void => {
@@ -320,31 +374,48 @@ export default class ArenaNode extends Node {
     this.particleVisual = createParticleVisual(1);
     this.particleVisual.root.accessibleName = a11yStrings.particleStringProperty;
     this.particleVisual.root.focusable = true;
-    this.particleVisual.root.tagName = "button";
+    this.particleVisual.root.tagName = "div";
     this.particleVisual.root.voicingNameResponse = a11yStrings.particleStringProperty;
 
-    const particleHelpTextProperty = createModeDependentHelpTextProperty(
+    this.particleControlHelpTextProperty = createModeDependentHelpTextProperty(
       model.controlModeProperty,
       a11yStrings.particleHelpPositionStringProperty,
       a11yStrings.particleHelpVelocityStringProperty,
       a11yStrings.particleHelpAccelerationStringProperty,
     );
-    this.derivedProperties.push(particleHelpTextProperty);
-    this.particleVisual.root.accessibleHelpText = particleHelpTextProperty;
-    this.particleVisual.root.voicingHintResponse = particleHelpTextProperty;
+    this.derivedProperties.push(this.particleControlHelpTextProperty);
+    this.particleVisual.root.accessibleHelpText = this.particleControlHelpTextProperty;
+    this.particleVisual.root.voicingHintResponse = this.particleControlHelpTextProperty;
 
-    const halfWidth = MazeGameConstants.LEVEL_MODEL_WIDTH / 2;
-    const halfHeight = MazeGameConstants.LEVEL_MODEL_HEIGHT / 2;
-    this.movementBoundsProperty = new Property(new Bounds2(-halfWidth, -halfHeight, halfWidth, halfHeight));
-    this.derivedProperties.push(this.movementBoundsProperty);
-
-    this.movementAlerter = new MazeGameMovementAlerter(model.particle.positionProperty, {
-      alertToVoicing: true,
-      descriptionAlertNode: this.particleVisual.root,
-      modelViewTransform,
-      borderAlertsOptions: {
-        boundsProperty: this.movementBoundsProperty,
+    this.particleHelpCallout = new Panel(
+      new Text(this.particleControlHelpTextProperty, {
+        font: new PhetFont(MazeGameLayoutConstants.ARENA_PARTICLE_HELP_FONT_SIZE),
+        fill: MazeGameColors.foregroundColorProperty,
+        maxWidth: MazeGameConstants.PARTICLE_HELP_CALLOUT_MAX_WIDTH,
+      }),
+      {
+        fill: MazeGameColors.panelFillProperty,
+        stroke: MazeGameColors.panelStrokeProperty,
+        cornerRadius: MazeGameLayoutConstants.ARENA_PARTICLE_HELP_CORNER_RADIUS,
+        xMargin: MazeGameLayoutConstants.ARENA_PARTICLE_HELP_X_MARGIN,
+        yMargin: MazeGameLayoutConstants.ARENA_PARTICLE_HELP_Y_MARGIN,
+        visible: false,
+        pickable: false,
       },
+    );
+
+    this.particleHelpFadeAnimation = new Animation({
+      duration: MazeGameConstants.PARTICLE_HELP_FADE_DURATION,
+      easing: Easing.LINEAR,
+      setValue: (opacity: number): void => {
+        this.particleHelpCallout.opacity = opacity;
+      },
+      from: 1,
+      to: 0,
+    });
+    this.particleHelpFadeAnimation.finishEmitter.addListener((): void => {
+      this.particleHelpCallout.visible = false;
+      this.particleHelpCallout.opacity = 1;
     });
 
     this.addChild(this.particleVisual.root);
@@ -353,43 +424,20 @@ export default class ArenaNode extends Node {
     model.particle.positionProperty.link(this.syncParticlePosition, { disposer: this });
     model.particle.positionProperty.link(this.recordTracePosition, { disposer: this });
     model.gameGenerationProperty.lazyLink(this.resetTraceAfterGame, { disposer: this });
-    model.gameGenerationProperty.lazyLink((): void => this.movementAlerter.reset(), { disposer: this });
+    model.gameGenerationProperty.lazyLink(this.hideParticleHelpCallout, { disposer: this });
 
-    const dragEnabledProperty = new DerivedProperty(
-      [model.controlModeProperty, model.wonProperty],
-      (mode, won): boolean => mode === ControlMode.POSITION && !won,
-    );
-    this.derivedProperties.push(dragEnabledProperty);
-    this.particleVisual.body.pickableProperty = dragEnabledProperty;
-    dragEnabledProperty.link(this.updateDragCursor, { disposer: this });
+    const particleInteractiveProperty = new DerivedProperty([model.wonProperty], (won): boolean => !won);
+    this.derivedProperties.push(particleInteractiveProperty);
+    this.particleVisual.root.pickableProperty = particleInteractiveProperty;
 
-    this.particleDragListener = new SoundDragListener({
-      start: (): void => {
-        if (model.wonProperty.value || model.controlModeProperty.value !== ControlMode.POSITION) {
-          return;
-        }
-        this.particleDragAlertPending = true;
-        this.movementAlerter.captureDragStartPosition();
-      },
-      drag: (event: SceneryEvent): void => {
-        if (model.wonProperty.value || model.controlModeProperty.value !== ControlMode.POSITION) {
-          return;
-        }
-        const local = this.levelLayoutRefs.modelViewTransform.viewToModelPosition(
-          this.particleVisual.body.globalToParentPoint(event.pointer.point),
-        );
-        model.particle.setPositionXY(local.x, local.y);
-      },
-      end: (): void => {
-        const shouldAlert = this.particleDragAlertPending;
-        this.particleDragAlertPending = false;
-        if (!shouldAlert || model.wonProperty.value || model.controlModeProperty.value !== ControlMode.POSITION) {
-          return;
-        }
-        this.movementAlerter.endDrag();
+    this.particlePressListener = new FireListener({
+      tandem: Tandem.OPT_OUT,
+      fireOnDown: true,
+      fire: (): void => {
+        this.announceParticleControlHelp();
       },
     });
-    this.particleVisual.body.addInputListener(this.particleDragListener);
+    this.particleVisual.root.addInputListener(this.particlePressListener);
 
     const winPulseMinScale = MazeGameLayoutConstants.ARENA_WIN_PULSE_MIN_SCALE;
     const winPulseMaxScale = MazeGameLayoutConstants.ARENA_WIN_PULSE_MAX_SCALE;
@@ -418,6 +466,7 @@ export default class ArenaNode extends Node {
     model.wonProperty.link(
       (won): void => {
         if (won) {
+          this.hideParticleHelpCallout();
           this.clearTrace();
           this.winRing.setScaleMagnitude(winPulseMinScale);
           this.winRing.opacity = 1;
@@ -451,6 +500,7 @@ export default class ArenaNode extends Node {
       visible: false,
     });
     this.addChild(this.accelerationArrow);
+    this.addChild(this.particleHelpCallout);
 
     this.vectorMultilink = Multilink.multilink(
       [
@@ -505,7 +555,6 @@ export default class ArenaNode extends Node {
    */
   public setLayout(modelViewTransform: ModelViewTransform2, viewBounds: Bounds2): void {
     this.levelLayoutRefs.modelViewTransform = modelViewTransform;
-    this.movementAlerter.modelViewTransform = modelViewTransform;
     this.floorRect.rectBounds = viewBounds;
 
     this.tileSizeView = modelViewTransform.modelToViewDeltaX(MazeGameConstants.TILE_SIZE);
@@ -525,8 +574,10 @@ export default class ArenaNode extends Node {
     }
     this.vectorMultilink.dispose();
     this.wallColorMultilink.dispose();
-    this.particleVisual.body.removeInputListener(this.particleDragListener);
-    this.particleDragListener.dispose();
+    this.particleVisual.root.removeInputListener(this.particlePressListener);
+    this.particlePressListener.dispose();
+    this.hideParticleHelpCallout();
+    this.particleHelpFadeAnimation.dispose();
     this.winPulseAnimation.dispose();
     super.dispose();
   }
