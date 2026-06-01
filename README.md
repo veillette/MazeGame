@@ -2,7 +2,7 @@
 
 A SceneryStack port of the [PhET Maze Game](https://phet.colorado.edu/en/simulations/maze-game)
 simulation. Drive a particle through tile-based mazes using **Position**, **Velocity**, or
-**Acceleration** control modes — drag the knob in the control pad, drag the particle (Position
+**Acceleration** control modes, drag the knob in the control pad, drag the particle (Position
 mode), or use arrow keys / WASD.
 
 ## Requirements
@@ -58,8 +58,6 @@ Entry: `src/main.ts` (must import `./brand.js` first).
 | Colors | `src/MazeGameColors.ts` |
 | Strings | `src/i18n/` |
 
-See [CLAUDE.md](CLAUDE.md) for the full file map and conventions.
-
 ## Documentation
 
 | Doc | Contents |
@@ -79,6 +77,3 @@ for details.
 GitHub Actions runs lint, type-check, tests, and build on push/PR to `main`. Production deploy
 to GitHub Pages is configured in `.github/workflows/deploy.yml`.
 
-## License
-
-MIT
