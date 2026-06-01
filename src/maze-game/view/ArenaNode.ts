@@ -13,11 +13,12 @@ import type { Bounds2 } from "scenerystack/dot";
 import { Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
 import type { ModelViewTransform2 } from "scenerystack/phetcommon";
-import { Circle, DragListener, Node, Rectangle, Text } from "scenerystack/scenery";
+import { Circle, DragListener, Node, Path, Rectangle, Text } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
 import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
+import { particleTraceEnabledProperty } from "../MazeGamePreferences.js";
 import { ControlMode } from "../model/ControlMode.js";
 import type Level from "../model/Level.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
@@ -28,9 +29,11 @@ export default class ArenaNode extends Node {
   private readonly floorRect: Rectangle;
   private readonly winRing: Circle;
   private readonly goalText: Text;
+  private readonly tracePath: Path;
   private readonly particleNode: Circle;
   private readonly velocityArrow: ArrowNode;
   private readonly accelerationArrow: ArrowNode;
+  private traceModelPoints: Vector2[] = [];
   private pulseTime = 0;
   private flickerTime = 0;
   private finishCenter = new Vector2(0, 0);
@@ -101,6 +104,71 @@ export default class ArenaNode extends Node {
 
   private readonly updateDragCursor = (enabled: boolean): void => {
     this.particleNode.cursor = enabled ? "pointer" : "default";
+  };
+
+  private readonly clearTrace = (): void => {
+    this.traceModelPoints = [];
+    this.tracePath.shape = null;
+  };
+
+  private readonly appendTracePoint = (modelPosition: Vector2): void => {
+    const last = this.traceModelPoints.at(-1);
+    if (last && last.distance(modelPosition) < MazeGameConstants.TRACE_MIN_SEGMENT_MODEL) {
+      return;
+    }
+    this.traceModelPoints.push(modelPosition.copy());
+    this.updateTraceShape();
+  };
+
+  private readonly updateTraceShape = (): void => {
+    if (this.traceModelPoints.length < 2) {
+      this.tracePath.shape = null;
+      return;
+    }
+    const transform = this.levelLayoutRefs.modelViewTransform;
+    const shape = new Shape();
+    const first = this.traceModelPoints[0];
+    if (!first) {
+      return;
+    }
+    const firstView = transform.modelToViewPosition(first);
+    shape.moveTo(firstView.x, firstView.y);
+    for (let i = 1; i < this.traceModelPoints.length; i++) {
+      const point = this.traceModelPoints[i];
+      if (!point) {
+        continue;
+      }
+      const viewPoint = transform.modelToViewPosition(point);
+      shape.lineTo(viewPoint.x, viewPoint.y);
+    }
+    this.tracePath.shape = shape;
+  };
+
+  private readonly syncTracePreference = (enabled: boolean, oldEnabled: boolean | null): void => {
+    this.tracePath.visible = enabled;
+    if (!enabled) {
+      this.clearTrace();
+      return;
+    }
+    if (oldEnabled === false) {
+      this.clearTrace();
+      this.appendTracePoint(this.modelRef.particle.position);
+    }
+  };
+
+  private readonly recordTracePosition = (position: Vector2): void => {
+    if (particleTraceEnabledProperty.value) {
+      this.appendTracePoint(position);
+    }
+  };
+
+  private readonly clearTraceOnTimerReset = (time: number, oldTime: number | null): void => {
+    if (time === 0 && oldTime !== null && oldTime > 0) {
+      this.clearTrace();
+      if (particleTraceEnabledProperty.value) {
+        this.appendTracePoint(this.modelRef.particle.position);
+      }
+    }
   };
 
   // Stored so rebuildLevel can access layout nodes created in the constructor.
@@ -190,13 +258,25 @@ export default class ArenaNode extends Node {
       { disposer: this },
     );
 
+    this.tracePath = new Path(null, {
+      stroke: MazeGameColors.particleTraceColorProperty,
+      lineWidth: MazeGameLayoutConstants.ARENA_TRACE_LINE_WIDTH,
+      lineCap: "round",
+      lineJoin: "round",
+      visible: false,
+    });
+    this.addChild(this.tracePath);
+
     this.particleNode = new Circle(0, {
       fill: MazeGameColors.particleColorProperty,
     });
     this.particleNode.accessibleName = a11yStrings.particleStringProperty;
     this.addChild(this.particleNode);
 
+    particleTraceEnabledProperty.link(this.syncTracePreference, { disposer: this });
     model.particle.positionProperty.link(this.syncParticlePosition, { disposer: this });
+    model.particle.positionProperty.link(this.recordTracePosition, { disposer: this });
+    model.timeProperty.link(this.clearTraceOnTimerReset, { disposer: this });
 
     const dragEnabledProperty = new DerivedProperty(
       [model.controlModeProperty, model.wonProperty],
@@ -296,6 +376,7 @@ export default class ArenaNode extends Node {
 
     this.updateParticlePointerTarget();
     this.rebuildLevel(this.modelRef.levelProperty.value);
+    this.updateTraceShape();
   }
 
   public override dispose(): void {

@@ -38,6 +38,7 @@ const MazeGameColors = {
 
   // The player particle.
   particleColorProperty: profileColor("particle", "#e53935", "#b71c1c"),
+  particleTraceColorProperty: profileColor("particleTrace", "rgba(229,57,53,0.55)", "rgba(183,28,28,0.5)"),
 
   // Control-pad colors. Same hue across themes (matches the original sim).
   positionVectorProperty: profileColor("positionVector", "#2575BA", "#2575BA"),

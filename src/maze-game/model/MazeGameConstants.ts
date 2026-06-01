@@ -16,6 +16,9 @@ const MazeGameConstants = {
   // Player particle radius in model meters. 0.375 m matches the pixi original.
   PARTICLE_RADIUS: 0.375,
 
+  // Minimum model-space movement before appending another trace vertex.
+  TRACE_MIN_SEGMENT_MODEL: TILE_SIZE * 0.02,
+
   // Grid dimensions (must match every level's ASCII grid).
   LEVEL_WIDTH,
   LEVEL_HEIGHT,

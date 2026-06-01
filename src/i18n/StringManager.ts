@@ -49,6 +49,11 @@ export type HudStrings = {
   readonly resetAllStringProperty: ReadOnlyProperty<string>;
 };
 
+export type PreferencesStrings = {
+  readonly particleTraceStringProperty: ReadOnlyProperty<string>;
+  readonly particleTraceDescriptionStringProperty: ReadOnlyProperty<string>;
+};
+
 export type A11yStrings = {
   readonly controlPadStringProperty: ReadOnlyProperty<string>;
   readonly particleStringProperty: ReadOnlyProperty<string>;
@@ -97,5 +102,9 @@ export class StringManager {
 
   public getA11yStrings(): A11yStrings {
     return stringProperties.a11y;
+  }
+
+  public getPreferencesStrings(): PreferencesStrings {
+    return stringProperties.preferences;
   }
 }

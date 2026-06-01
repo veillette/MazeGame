@@ -27,6 +27,10 @@
     "nextLevel": "Next Level",
     "resetAll": "Reset All"
   },
+  "preferences": {
+    "particleTrace": "Particle trace",
+    "particleTraceDescription": "Show the path traveled by the particle."
+  },
   "a11y": {
     "controlPad": "Control pad. Drag the knob to set position, velocity, or acceleration.",
     "particle": "Particle. Drag to move when Position control mode is selected.",

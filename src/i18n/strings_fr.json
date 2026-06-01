@@ -27,6 +27,10 @@
     "nextLevel": "Niveau suivant",
     "resetAll": "Tout réinitialiser"
   },
+  "preferences": {
+    "particleTrace": "Trajectoire",
+    "particleTraceDescription": "Afficher le chemin parcouru par la particule."
+  },
   "a11y": {
     "controlPad": "Panneau de contrôle. Faites glisser le bouton pour régler la position, la vitesse ou l'accélération.",
     "particle": "Particule. Faites glisser pour déplacer en mode Position.",
