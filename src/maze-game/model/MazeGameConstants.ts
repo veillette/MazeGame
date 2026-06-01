@@ -53,6 +53,12 @@ const MazeGameConstants = {
 
   // Stroke width (px) of the win-pulse ring.
   WIN_PULSE_STROKE: 3,
+
+  // Gap (view px) between the finish tile top edge and the "Goal!" label bottom.
+  GOAL_LABEL_GAP_VIEW: 6,
+
+  // Max width (px) for HUD warning text so long locales do not overlap the arena.
+  HUD_WARNING_MAX_WIDTH: 220,
 } as const;
 
 export default MazeGameConstants;

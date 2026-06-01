@@ -68,62 +68,66 @@ export class MazeGameModel implements TModel {
   private stepInternal(dt: number): void {
     const particle = this.particle;
     const mode = this.controlModeProperty.value;
+    const level = this.levelProperty.value;
+    const radius = particle.radius;
 
     // Save pre-integration position for wall push-back bisection.
     const oldX = particle.position.x;
     const oldY = particle.position.y;
+    const wasCollidingBefore =
+      mode !== ControlMode.POSITION && level.collidesWithTileTypeAt(TileType.WALL, oldX, oldY, radius);
 
-    // Integrate kinematics.
-    if (mode === ControlMode.VELOCITY) {
-      const v = particle.velocity;
-      particle.setPositionXY(particle.position.x + v.x * dt, particle.position.y + v.y * dt);
-    } else if (mode === ControlMode.ACCELERATION) {
-      const v = particle.velocity;
-      const a = particle.acceleration;
-      const newVx = v.x + a.x * dt;
-      const newVy = v.y + a.y * dt;
-      particle.setPositionXY(
-        particle.position.x + v.x * dt + 0.5 * a.x * dt * dt,
-        particle.position.y + v.y * dt + 0.5 * a.y * dt * dt,
-      );
-      particle.setVelocityXY(newVx, newVy);
+    // Do not integrate while already overlapping a wall (prevents tunneling).
+    if (!wasCollidingBefore) {
+      if (mode === ControlMode.VELOCITY) {
+        const v = particle.velocity;
+        particle.setPositionXY(particle.position.x + v.x * dt, particle.position.y + v.y * dt);
+      } else if (mode === ControlMode.ACCELERATION) {
+        const v = particle.velocity;
+        const a = particle.acceleration;
+        const newVx = v.x + a.x * dt;
+        const newVy = v.y + a.y * dt;
+        particle.setPositionXY(
+          particle.position.x + v.x * dt + 0.5 * a.x * dt * dt,
+          particle.position.y + v.y * dt + 0.5 * a.y * dt * dt,
+        );
+        particle.setVelocityXY(newVx, newVy);
+      }
     }
     // POSITION mode: position is set directly by drag/keyboard listeners.
 
-    // Collision detection (wall).
-    const level = this.levelProperty.value;
-    const colliding = level.collidesWithTileTypeAt(
-      TileType.WALL,
-      particle.position.x,
-      particle.position.y,
-      particle.radius,
-    );
-
     // Wall push-back for physics-integrated modes: bisect back to the last
     // non-colliding position so the particle never tunnels through a wall.
-    if (colliding && mode !== ControlMode.POSITION) {
-      const wasAlreadyColliding = level.collidesWithTileTypeAt(TileType.WALL, oldX, oldY, particle.radius);
-      if (!wasAlreadyColliding) {
-        let safeX = oldX;
-        let safeY = oldY;
-        let testX = particle.position.x;
-        let testY = particle.position.y;
-        for (let i = 0; i < 8; i++) {
-          const midX = (safeX + testX) / 2;
-          const midY = (safeY + testY) / 2;
-          if (level.collidesWithTileTypeAt(TileType.WALL, midX, midY, particle.radius)) {
-            testX = midX;
-            testY = midY;
-          } else {
-            safeX = midX;
-            safeY = midY;
-          }
+    if (mode !== ControlMode.POSITION) {
+      const collidingAfterIntegration = level.collidesWithTileTypeAt(
+        TileType.WALL,
+        particle.position.x,
+        particle.position.y,
+        radius,
+      );
+
+      if (collidingAfterIntegration) {
+        if (wasCollidingBefore) {
+          particle.setPositionXY(oldX, oldY);
+        } else {
+          const safe = level.findLastNonCollidingPoint(
+            TileType.WALL,
+            oldX,
+            oldY,
+            particle.position.x,
+            particle.position.y,
+            radius,
+          );
+          particle.setPositionXY(safe.x, safe.y);
         }
-        particle.setPositionXY(safeX, safeY);
+        particle.setVelocityXY(0, 0);
+        if (mode === ControlMode.ACCELERATION) {
+          particle.setAccelerationXY(0, 0);
+        }
       }
-      // Zero velocity so the particle doesn't bore into the wall next frame.
-      particle.setVelocityXY(0, 0);
     }
+
+    const colliding = level.collidesWithTileTypeAt(TileType.WALL, particle.position.x, particle.position.y, radius);
 
     particle.collidingProperty.value = colliding;
     if (colliding && !this.previousColliding) {

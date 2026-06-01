@@ -26,6 +26,7 @@ import { ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import { collect_mp3, SoundClip, selectionArpeggio001_mp3, soundManager, wallContact_mp3 } from "scenerystack/tambo";
 import type { Tandem } from "scenerystack/tandem";
+import { StringManager } from "../../i18n/StringManager.js";
 import { ControlMode } from "../model/ControlMode.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
 import type { MazeGameModel } from "../model/MazeGameModel.js";
@@ -40,28 +41,31 @@ const MARGIN = 14;
 const RIGHT_COLUMN_WIDTH = 240;
 const RIGHT_COLUMN_GAP = 10;
 
-const KEYS = ["arrowLeft", "arrowRight", "arrowUp", "arrowDown", "a", "d", "w", "s", "space"] as ReadonlyArray<
-  "arrowLeft" | "arrowRight" | "arrowUp" | "arrowDown" | "a" | "d" | "w" | "s" | "space"
->;
+const KEYS = ["arrowLeft", "arrowRight", "arrowUp", "arrowDown", "a", "d", "w", "s", "space"] as const;
+
+const AXIS_BY_KEY = {
+  arrowLeft: [-1, 0],
+  a: [-1, 0],
+  arrowRight: [1, 0],
+  d: [1, 0],
+  arrowUp: [0, -1],
+  w: [0, -1],
+  arrowDown: [0, 1],
+  s: [0, 1],
+} as const;
+
+type AxisKey = keyof typeof AXIS_BY_KEY;
+
+function isAxisKey(key: string): key is AxisKey {
+  return key in AXIS_BY_KEY;
+}
 
 // Returns the [dx, dy] unit contribution for a single key, or null if unrecognised.
 function axisForKey(key: string): readonly [number, number] | null {
-  switch (key) {
-    case "arrowLeft":
-    case "a":
-      return [-1, 0];
-    case "arrowRight":
-    case "d":
-      return [1, 0];
-    case "arrowUp":
-    case "w":
-      return [0, -1];
-    case "arrowDown":
-    case "s":
-      return [0, 1];
-    default:
-      return null;
+  if (!isAxisKey(key)) {
+    return null;
   }
+  return AXIS_BY_KEY[key];
 }
 
 export class MazeGameScreenView extends ScreenView {
@@ -121,6 +125,7 @@ export class MazeGameScreenView extends ScreenView {
       },
       right: layoutBounds.maxX - MARGIN,
       bottom: layoutBounds.maxY - MARGIN,
+      accessibleName: StringManager.getInstance().getHudStrings().resetAllStringProperty,
       tandem: providedOptions.tandem.createTandem("resetAllButton"),
     });
 
@@ -134,7 +139,7 @@ export class MazeGameScreenView extends ScreenView {
       keys: [...KEYS],
       fireOnHold: true,
       fire: (_event, keysPressed) => {
-        const activeKeys = String(keysPressed).split("+");
+        const activeKeys = keysPressed.split("+");
         const mode = model.controlModeProperty.value;
 
         if (activeKeys.includes("space")) {

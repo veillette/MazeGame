@@ -13,7 +13,7 @@ import { NumberDisplay, PhetFont } from "scenerystack/scenery-phet";
 import { Panel, TextPushButton } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
-import { LEVEL_KEYS } from "../model/Levels.js";
+import MazeGameConstants from "../model/MazeGameConstants.js";
 import type { MazeGameModel } from "../model/MazeGameModel.js";
 
 const LABEL_FONT = new PhetFont({ size: 14, weight: "bold" });
@@ -25,29 +25,37 @@ const VBOX_SPACING = 6;
 
 export default class HudNode extends Panel {
   public constructor(model: MazeGameModel) {
-    const strings = StringManager.getInstance().getHudStrings();
+    const stringManager = StringManager.getInstance();
+    const strings = stringManager.getHudStrings();
+    const a11yStrings = stringManager.getA11yStrings();
+
+    const timeDisplay = new NumberDisplay(model.timeProperty, new Range(0, 999), {
+      decimalPlaces: 1,
+      align: "right",
+      textOptions: { font: VALUE_FONT, fill: MazeGameColors.foregroundColorProperty },
+    });
+    timeDisplay.accessibleName = a11yStrings.timeDisplayStringProperty;
 
     const timeRow = new HBox({
       spacing: HBOX_SPACING,
       children: [
         new Text(strings.timeStringProperty, { font: LABEL_FONT, fill: MazeGameColors.foregroundColorProperty }),
-        new NumberDisplay(model.timeProperty, new Range(0, 999), {
-          decimalPlaces: 1,
-          align: "right",
-          textOptions: { font: VALUE_FONT },
-        }),
+        timeDisplay,
       ],
     });
+
+    const collisionsDisplay = new NumberDisplay(model.collisionsProperty, new Range(0, 9999), {
+      decimalPlaces: 0,
+      align: "right",
+      textOptions: { font: VALUE_FONT, fill: MazeGameColors.foregroundColorProperty },
+    });
+    collisionsDisplay.accessibleName = a11yStrings.collisionsDisplayStringProperty;
 
     const collisionsRow = new HBox({
       spacing: HBOX_SPACING,
       children: [
         new Text(strings.collisionsStringProperty, { font: LABEL_FONT, fill: MazeGameColors.foregroundColorProperty }),
-        new NumberDisplay(model.collisionsProperty, new Range(0, 9999), {
-          decimalPlaces: 0,
-          align: "right",
-          textOptions: { font: VALUE_FONT },
-        }),
+        collisionsDisplay,
       ],
     });
 
@@ -55,8 +63,10 @@ export default class HudNode extends Panel {
     const collisionWarning = new Text(strings.collisionWarningStringProperty, {
       font: WARNING_FONT,
       fill: MazeGameColors.collisionWarningColorProperty,
+      maxWidth: MazeGameConstants.HUD_WARNING_MAX_WIDTH,
       visible: false,
     });
+    collisionWarning.accessibleParagraph = strings.collisionWarningStringProperty;
     const collisionWarningVisibleProperty = new DerivedProperty(
       [model.collisionsProperty, model.wonProperty],
       (c, won) => c > 0 && !won,
@@ -69,6 +79,7 @@ export default class HudNode extends Panel {
       font: BUTTON_FONT,
       baseColor: MazeGameColors.resetLevelButtonColorProperty,
       listener: () => model.resetLevel(),
+      accessibleName: strings.resetLevelStringProperty,
     });
 
     // "Next Level" — only shown when the player has won and isn't on the last level.
@@ -77,10 +88,11 @@ export default class HudNode extends Panel {
       baseColor: MazeGameColors.nextLevelButtonColorProperty,
       listener: () => model.advanceLevel(),
       visible: false,
+      accessibleName: strings.nextLevelStringProperty,
     });
     const nextLevelVisibleProperty = new DerivedProperty(
       [model.wonProperty, model.levelNameProperty],
-      (won, levelName) => won && LEVEL_KEYS.indexOf(levelName) < LEVEL_KEYS.length - 1,
+      (won) => won && !model.isLastLevel,
     );
     nextLevelVisibleProperty.link((v) => {
       nextLevelButton.visible = v;
@@ -99,6 +111,7 @@ export default class HudNode extends Panel {
       xMargin: 12,
       yMargin: 8,
       align: "left",
+      accessibleName: strings.timeStringProperty,
     });
   }
 }

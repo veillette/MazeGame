@@ -10,7 +10,7 @@
  *   brand.ts → splash.ts → assert.ts → init.ts
  */
 
-// brand.js MUST be first — triggers: init.ts → assert.ts → splash.ts → brand.ts
+// brand.js MUST be first — triggers: brand.ts → splash.ts → assert.ts → init.ts
 import "./brand.js";
 
 import { onReadyToLaunch, PreferencesModel, Sim } from "scenerystack/sim";
@@ -39,9 +39,9 @@ onReadyToLaunch(() => {
       },
     }),
     credits: {
-      leadDesign: "",
-      softwareDevelopment: "",
-      team: "",
+      leadDesign: "PhET Interactive Simulations (original)",
+      softwareDevelopment: "SceneryStack port",
+      team: "PhET Interactive Simulations",
       qualityAssurance: "",
     },
   });

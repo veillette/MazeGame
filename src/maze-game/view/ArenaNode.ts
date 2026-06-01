@@ -150,7 +150,7 @@ export default class ArenaNode extends Node {
       this.finishCenter = new Vector2(finishX + tileSize / 2, finishY + tileSize / 2);
       this.winRing.center = this.finishCenter;
       this.goalText.centerX = this.finishCenter.x;
-      this.goalText.bottom = finishY - 6;
+      this.goalText.bottom = finishY - MazeGameConstants.GOAL_LABEL_GAP_VIEW;
     });
 
     // Toggle celebration visibility and reset its animation phase on win.
@@ -167,6 +167,7 @@ export default class ArenaNode extends Node {
     this.particleNode = new Circle(particleRadiusView, {
       fill: MazeGameColors.particleColorProperty,
     });
+    this.particleNode.accessibleName = StringManager.getInstance().getA11yStrings().particleStringProperty;
     this.addChild(this.particleNode);
 
     model.particle.positionProperty.link((position) => {

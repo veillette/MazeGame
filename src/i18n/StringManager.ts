@@ -58,4 +58,8 @@ export class StringManager {
   public getHudStrings(): typeof stringProperties.hud {
     return stringProperties.hud;
   }
+
+  public getA11yStrings(): typeof stringProperties.a11y {
+    return stringProperties.a11y;
+  }
 }

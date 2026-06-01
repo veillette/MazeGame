@@ -60,6 +60,8 @@ export default class LevelSelector extends Panel {
       xMargin: 12,
       yMargin: 10,
       align: "left",
+      accessibleName: strings.titleStringProperty,
     });
+    radioGroup.accessibleName = strings.titleStringProperty;
   }
 }

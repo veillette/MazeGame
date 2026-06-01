@@ -13,6 +13,7 @@
 import { Multilink } from "scenerystack/axon";
 import { Bounds2, clamp, Vector2 } from "scenerystack/dot";
 import { Shape } from "scenerystack/kite";
+import type { ProfileColorProperty } from "scenerystack/scenery";
 import { Circle, DragListener, Node, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Panel, RectangularRadioButtonGroup } from "scenerystack/sun";
@@ -33,7 +34,6 @@ const ARROW_HEAD_HEIGHT = 14;
 const ARROW_TAIL_WIDTH = 5;
 
 const KNOB_RADIUS = 9;
-const KNOB_STROKE = "rgba(0,0,0,0.4)";
 
 const TAB_SPACING = 4;
 const PAD_CORNER_RADIUS = 4;
@@ -42,7 +42,7 @@ const PANEL_X_MARGIN = 12;
 const PANEL_Y_MARGIN = 10;
 const VBOX_SPACING = 8;
 
-const COLOR_BY_MODE = {
+const COLOR_BY_MODE: Record<ControlMode, ProfileColorProperty> = {
   [ControlMode.POSITION]: MazeGameColors.positionVectorProperty,
   [ControlMode.VELOCITY]: MazeGameColors.velocityVectorProperty,
   [ControlMode.ACCELERATION]: MazeGameColors.accelerationVectorProperty,
@@ -50,7 +50,9 @@ const COLOR_BY_MODE = {
 
 export default class ControlPanel extends Panel {
   public constructor(model: MazeGameModel) {
-    const strings = StringManager.getInstance().getControlModeStrings();
+    const stringManager = StringManager.getInstance();
+    const strings = stringManager.getControlModeStrings();
+    const a11yStrings = stringManager.getA11yStrings();
 
     const titleFont = new PhetFont({ size: TITLE_FONT_SIZE, weight: "bold" });
     const tabFont = new PhetFont(TAB_FONT_SIZE);
@@ -65,21 +67,25 @@ export default class ControlPanel extends Panel {
       [
         {
           value: ControlMode.POSITION,
-          createNode: () => new Text(strings.positionStringProperty, { font: tabFont, fill: COLOR_BY_MODE.position }),
+          createNode: () =>
+            new Text(strings.positionStringProperty, { font: tabFont, fill: COLOR_BY_MODE[ControlMode.POSITION] }),
         },
         {
           value: ControlMode.VELOCITY,
-          createNode: () => new Text(strings.velocityStringProperty, { font: tabFont, fill: COLOR_BY_MODE.velocity }),
+          createNode: () =>
+            new Text(strings.velocityStringProperty, { font: tabFont, fill: COLOR_BY_MODE[ControlMode.VELOCITY] }),
         },
         {
           value: ControlMode.ACCELERATION,
           createNode: () =>
-            new Text(strings.accelerationStringProperty, { font: tabFont, fill: COLOR_BY_MODE.acceleration }),
+            new Text(strings.accelerationStringProperty, {
+              font: tabFont,
+              fill: COLOR_BY_MODE[ControlMode.ACCELERATION],
+            }),
         },
       ],
       { orientation: "horizontal", spacing: TAB_SPACING },
     );
-
     const padBackground = new Rectangle(-HALF, -HALF, AREA, AREA, {
       fill: MazeGameColors.padFillProperty,
       cornerRadius: PAD_CORNER_RADIUS,
@@ -90,12 +96,16 @@ export default class ControlPanel extends Panel {
       tailWidth: ARROW_TAIL_WIDTH,
       stroke: null,
     });
-    const knob = new Circle(KNOB_RADIUS, { cursor: "pointer", stroke: KNOB_STROKE });
+    const knob = new Circle(KNOB_RADIUS, {
+      cursor: "pointer",
+      stroke: MazeGameColors.knobStrokeProperty,
+    });
     const padLayer = new Node({
       clipArea: Shape.bounds(new Bounds2(-HALF, -HALF, HALF, HALF)),
       children: [arrow, knob],
     });
     const pad = new Node({ children: [padBackground, padLayer] });
+    pad.accessibleName = a11yStrings.controlPadStringProperty;
 
     const content = new VBox({ spacing: VBOX_SPACING, children: [header, tabs, pad] });
     super(content, {
@@ -104,6 +114,7 @@ export default class ControlPanel extends Panel {
       cornerRadius: PANEL_CORNER_RADIUS,
       xMargin: PANEL_X_MARGIN,
       yMargin: PANEL_Y_MARGIN,
+      accessibleName: strings.titleStringProperty,
     });
 
     let isDragging = false;

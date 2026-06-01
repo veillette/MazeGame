@@ -47,6 +47,9 @@ const MazeGameColors = {
   // Drag-pad surface inside the control panel.
   padFillProperty: profileColor("padFill", "rgba(255,255,255,0.5)", "rgba(255,255,255,0.85)"),
 
+  // Control-pad knob outline.
+  knobStrokeProperty: profileColor("knobStroke", "rgba(0,0,0,0.4)", "rgba(0,0,0,0.35)"),
+
   // Panels.
   panelFillProperty: profileColor("panelFill", PANEL_FILL_DARK, PANEL_FILL_LIGHT),
   panelStrokeProperty: profileColor("panelStroke", PANEL_STROKE_DARK, PANEL_STROKE_LIGHT),

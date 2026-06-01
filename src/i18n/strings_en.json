@@ -22,6 +22,13 @@
     "won": "Goal!",
     "resetLevel": "Reset Level",
     "collisionWarning": "Collision! Reset to try again.",
-    "nextLevel": "Next Level"
+    "nextLevel": "Next Level",
+    "resetAll": "Reset All"
+  },
+  "a11y": {
+    "controlPad": "Control pad. Drag the knob to set position, velocity, or acceleration.",
+    "particle": "Particle. Drag to move when Position control mode is selected.",
+    "timeDisplay": "Elapsed time, seconds",
+    "collisionsDisplay": "Number of wall collisions"
   }
 }

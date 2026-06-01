@@ -26,17 +26,17 @@ export default class Level {
   public static readonly HEIGHT = LEVEL_HEIGHT;
 
   /** Build a Level from an ASCII grid + a char-to-tile-value map. */
-  public static fromStringArray(rows: readonly string[], charToTile: Record<string, number>): Level {
+  public static fromStringArray(rows: readonly string[], charToTile: Record<string, TileType>): Level {
     if (rows.length !== LEVEL_HEIGHT) {
       throw new Error(`Level must have exactly ${LEVEL_HEIGHT} rows; got ${rows.length}`);
     }
-    const data: number[][] = [];
+    const data: TileType[][] = [];
     for (let r = 0; r < rows.length; r++) {
       const row = rows[r] ?? "";
       if (row.length !== LEVEL_WIDTH) {
         throw new Error(`Level row ${r} must be exactly ${LEVEL_WIDTH} chars; got ${row.length}`);
       }
-      const cells: number[] = [];
+      const cells: TileType[] = [];
       for (let c = 0; c < row.length; c++) {
         const ch = row.charAt(c);
         const value = charToTile[ch];
@@ -50,9 +50,9 @@ export default class Level {
     return new Level(data);
   }
 
-  public readonly data: ReadonlyArray<ReadonlyArray<number>>;
+  public readonly data: ReadonlyArray<ReadonlyArray<TileType>>;
 
-  public constructor(data: ReadonlyArray<ReadonlyArray<number>>) {
+  public constructor(data: ReadonlyArray<ReadonlyArray<TileType>>) {
     this.data = data;
   }
 
@@ -80,7 +80,7 @@ export default class Level {
     return row >= 0 && row < LEVEL_HEIGHT && col >= 0 && col < LEVEL_WIDTH;
   }
 
-  public tileAt(x: number, y: number): number {
+  public tileAt(x: number, y: number): TileType {
     const row = this.yToRow(y);
     const col = this.xToCol(x);
     if (!this.inBounds(col, row)) {
@@ -94,7 +94,7 @@ export default class Level {
    * type? Mirrors the pixi algorithm: cheap point-in-tile check first, then
    * AABB-vs-circle overlap on the up-to-9 neighbour tiles.
    */
-  public collidesWithTileTypeAt(type: number, x: number, y: number, radius: number): boolean {
+  public collidesWithTileTypeAt(type: TileType, x: number, y: number, radius: number): boolean {
     const cCenter = this.xToCol(x);
     const rCenter = this.yToRow(y);
     if (this.inBounds(cCenter, rCenter) && this.data[rCenter]?.[cCenter] === type) {
@@ -135,7 +135,38 @@ export default class Level {
     return false;
   }
 
-  private findFirst(type: number): GridPosition {
+  /**
+   * Binary-search along the segment from (safeX, safeY) toward (testX, testY)
+   * for the last point that does not collide with the given tile type.
+   */
+  public findLastNonCollidingPoint(
+    type: TileType,
+    safeX: number,
+    safeY: number,
+    testX: number,
+    testY: number,
+    radius: number,
+    iterations = 8,
+  ): { x: number; y: number } {
+    let sx = safeX;
+    let sy = safeY;
+    let tx = testX;
+    let ty = testY;
+    for (let i = 0; i < iterations; i++) {
+      const midX = (sx + tx) / 2;
+      const midY = (sy + ty) / 2;
+      if (this.collidesWithTileTypeAt(type, midX, midY, radius)) {
+        tx = midX;
+        ty = midY;
+      } else {
+        sx = midX;
+        sy = midY;
+      }
+    }
+    return { x: sx, y: sy };
+  }
+
+  private findFirst(type: TileType): GridPosition {
     for (let r = 0; r < this.data.length; r++) {
       const row = this.data[r];
       if (!row) {

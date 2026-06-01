@@ -10,7 +10,9 @@
 import Level from "./Level.js";
 import { TileType } from "./TileType.js";
 
-const charToTile: Record<string, number> = {
+type LevelChar = " " | "W" | "S" | "F";
+
+const charToTile: Record<LevelChar, TileType> = {
   " ": TileType.FLOOR,
   W: TileType.WALL,
   S: TileType.START,
