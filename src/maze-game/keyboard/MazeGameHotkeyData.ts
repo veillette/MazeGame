@@ -11,20 +11,22 @@ import { HotkeyData } from "scenerystack/scenery";
 const MOVE_KEYS = ["arrowLeft", "arrowRight", "arrowUp", "arrowDown", "a", "d", "w", "s"] as const;
 const STOP_KEYS = ["space"] as const;
 
-export default class MazeGameHotkeyData {
-  public static readonly KEYBOARD_KEYS = [...MOVE_KEYS, ...STOP_KEYS] as const;
+const MazeGameHotkeyData = {
+  KEYBOARD_KEYS: [...MOVE_KEYS, ...STOP_KEYS] as const,
 
-  public static readonly MOVE_PARTICLE = new HotkeyData({
+  MOVE_PARTICLE: new HotkeyData({
     keys: [...MOVE_KEYS],
     repoName: "maze-game",
     global: true,
     binderName: "Move Particle",
-  });
+  }),
 
-  public static readonly STOP_MOTION = new HotkeyData({
+  STOP_MOTION: new HotkeyData({
     keys: [...STOP_KEYS],
     repoName: "maze-game",
     global: true,
     binderName: "Stop Motion",
-  });
-}
+  }),
+} as const;
+
+export default MazeGameHotkeyData;
