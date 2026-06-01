@@ -14,15 +14,9 @@ import { Panel, type PanelOptions } from "scenerystack/sun";
 import { ElapsedTimeNode } from "scenerystack/vegas";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
+import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
 import type { MazeGameModel } from "../model/MazeGameModel.js";
-
-const VALUE_FONT = new PhetFont(14);
-const WARNING_FONT = new PhetFont({ size: 12, weight: "bold" });
-const COLLISION_MARKER_FONT = new PhetFont({ size: 16, weight: "bold" });
-const HBOX_SPACING = 6;
-const VBOX_SPACING = 6;
-const CLOCK_ICON_RADIUS = 11;
 
 type HudNodeSelfOptions = {
   interruptInput?: () => void;
@@ -34,17 +28,6 @@ export default class HudNode extends Panel {
   private readonly elapsedTimeNodeRef: ElapsedTimeNode;
   private readonly collisionsDisplayRef: NumberDisplay;
   private readonly derivedProperties: Array<{ dispose(): void }> = [];
-
-  private readonly collisionWarningRef!: Text;
-  private readonly nextLevelButtonRef!: StepForwardButton;
-
-  private readonly updateCollisionWarningVisible = (v: boolean): void => {
-    this.collisionWarningRef.visible = v;
-  };
-
-  private readonly updateNextLevelVisible = (v: boolean): void => {
-    this.nextLevelButtonRef.visible = v;
-  };
 
   public constructor(model: MazeGameModel, providedOptions?: HudNodeOptions) {
     const stringManager = StringManager.getInstance();
@@ -70,24 +53,31 @@ export default class HudNode extends Panel {
     const interruptInput = options.interruptInput;
 
     const elapsedTimeNode = new ElapsedTimeNode(model.timeProperty, {
-      clockIconRadius: CLOCK_ICON_RADIUS,
-      font: VALUE_FONT,
+      clockIconRadius: MazeGameLayoutConstants.HUD_CLOCK_ICON_RADIUS,
+      font: new PhetFont(MazeGameLayoutConstants.HUD_VALUE_FONT_SIZE),
       textFill: MazeGameColors.foregroundColorProperty,
     });
     elapsedTimeNode.accessibleName = a11yStrings.timeDisplayStringProperty;
 
-    const collisionsDisplay = new NumberDisplay(model.collisionsProperty, new Range(0, 9999), {
-      decimalPlaces: 0,
-      align: "right",
-      textOptions: { font: VALUE_FONT, fill: MazeGameColors.foregroundColorProperty },
-    });
+    const collisionsDisplay = new NumberDisplay(
+      model.collisionsProperty,
+      new Range(0, MazeGameLayoutConstants.HUD_COLLISIONS_MAX),
+      {
+        decimalPlaces: 0,
+        align: "right",
+        textOptions: {
+          font: new PhetFont(MazeGameLayoutConstants.HUD_VALUE_FONT_SIZE),
+          fill: MazeGameColors.foregroundColorProperty,
+        },
+      },
+    );
     collisionsDisplay.accessibleName = a11yStrings.collisionsDisplayStringProperty;
 
     const collisionsRow = new HBox({
-      spacing: HBOX_SPACING,
+      spacing: MazeGameLayoutConstants.HUD_HBOX_SPACING,
       children: [
         new Text(strings.collisionMultiplierStringProperty, {
-          font: COLLISION_MARKER_FONT,
+          font: new PhetFont({ size: MazeGameLayoutConstants.HUD_COLLISION_MARKER_FONT_SIZE, weight: "bold" }),
           fill: MazeGameColors.foregroundColorProperty,
         }),
         collisionsDisplay,
@@ -95,7 +85,7 @@ export default class HudNode extends Panel {
     });
 
     const collisionWarning = new Text(strings.collisionWarningStringProperty, {
-      font: WARNING_FONT,
+      font: new PhetFont({ size: MazeGameLayoutConstants.HUD_WARNING_FONT_SIZE, weight: "bold" }),
       fill: MazeGameColors.collisionWarningColorProperty,
       maxWidth: MazeGameConstants.HUD_WARNING_MAX_WIDTH,
       visible: false,
@@ -122,13 +112,13 @@ export default class HudNode extends Panel {
     });
 
     const actionButtons = new HBox({
-      spacing: HBOX_SPACING,
+      spacing: MazeGameLayoutConstants.HUD_HBOX_SPACING,
       children: [resetLevelButton, nextLevelButton],
     });
 
     const content = new VBox({
       align: "left",
-      spacing: VBOX_SPACING,
+      spacing: MazeGameLayoutConstants.HUD_VBOX_SPACING,
       children: [elapsedTimeNode, collisionsRow, collisionWarning, actionButtons],
     });
 
@@ -137,22 +127,20 @@ export default class HudNode extends Panel {
 
     this.elapsedTimeNodeRef = elapsedTimeNode;
     this.collisionsDisplayRef = collisionsDisplay;
-    this.collisionWarningRef = collisionWarning;
-    this.nextLevelButtonRef = nextLevelButton;
 
     const collisionWarningVisibleProperty = new DerivedProperty(
       [model.collisionsProperty, model.wonProperty],
       (c, won): boolean => c > 0 && !won,
     );
     this.derivedProperties.push(collisionWarningVisibleProperty);
-    collisionWarningVisibleProperty.link(this.updateCollisionWarningVisible, { disposer: this });
+    collisionWarning.visibleProperty = collisionWarningVisibleProperty;
 
     const nextLevelVisibleProperty = new DerivedProperty(
       [model.wonProperty, model.isLastLevelProperty],
       (won, isLastLevel): boolean => won && !isLastLevel,
     );
     this.derivedProperties.push(nextLevelVisibleProperty);
-    nextLevelVisibleProperty.link(this.updateNextLevelVisible, { disposer: this });
+    nextLevelButton.visibleProperty = nextLevelVisibleProperty;
   }
 
   public override dispose(): void {

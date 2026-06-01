@@ -80,4 +80,11 @@ export default class Particle {
     this.accelerationPropertyImpl.reset();
     this.collidingPropertyImpl.reset();
   }
+
+  public dispose(): void {
+    this.positionPropertyImpl.dispose();
+    this.velocityPropertyImpl.dispose();
+    this.accelerationPropertyImpl.dispose();
+    this.collidingPropertyImpl.dispose();
+  }
 }

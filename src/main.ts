@@ -34,6 +34,9 @@ onReadyToLaunch(() => {
         supportsProjectorMode: true,
         supportsInteractiveHighlights: true,
       },
+      audioOptions: {
+        supportsSound: true,
+      },
       localizationOptions: {
         supportsDynamicLocale: true,
       },

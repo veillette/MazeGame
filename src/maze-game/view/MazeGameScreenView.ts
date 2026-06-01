@@ -29,6 +29,7 @@ import { collect_mp3, SoundClip, selectionArpeggio001_mp3, soundManager, wallCon
 import type { Tandem } from "scenerystack/tandem";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
+import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 import { ControlMode } from "../model/ControlMode.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
 import type { MazeGameModel } from "../model/MazeGameModel.js";
@@ -38,10 +39,6 @@ import HudNode from "./HudNode.js";
 import LevelSelector from "./LevelSelector.js";
 
 type MazeGameScreenViewOptions = ScreenViewOptions & { tandem: Tandem };
-
-const MARGIN = 14;
-const RIGHT_COLUMN_WIDTH = 240;
-const RIGHT_COLUMN_GAP = 10;
 
 const KEYS = ["arrowLeft", "arrowRight", "arrowUp", "arrowDown", "a", "d", "w", "s", "space"] as const;
 
@@ -69,11 +66,52 @@ function axisForKey(key: string): readonly [number, number] | null {
   return AXIS_BY_KEY[key];
 }
 
+type ArenaLayout = {
+  modelViewTransform: ModelViewTransform2;
+  arenaBounds: Bounds2;
+};
+
+function computeArenaLayout(visibleBounds: Bounds2): ArenaLayout {
+  const margin = MazeGameLayoutConstants.SCREEN_MARGIN;
+  const rightColumnWidth = MazeGameLayoutConstants.RIGHT_COLUMN_WIDTH;
+
+  const arenaLeft = visibleBounds.minX + margin;
+  const arenaTop = visibleBounds.minY + margin;
+  const arenaRight = visibleBounds.maxX - rightColumnWidth - 2 * margin;
+  const arenaBottom = visibleBounds.maxY - margin;
+  const arenaWidth = arenaRight - arenaLeft;
+  const arenaHeight = arenaBottom - arenaTop;
+
+  const modelLevelWidth = MazeGameConstants.LEVEL_MODEL_WIDTH;
+  const modelLevelHeight = MazeGameConstants.LEVEL_MODEL_HEIGHT;
+  const scale = Math.min(arenaWidth / modelLevelWidth, arenaHeight / modelLevelHeight);
+
+  const arenaCenterX = arenaLeft + arenaWidth / 2;
+  const arenaCenterY = arenaTop + arenaHeight / 2;
+
+  const modelViewTransform = ModelViewTransform2.createSinglePointScaleMapping(
+    Vector2.ZERO,
+    new Vector2(arenaCenterX, arenaCenterY),
+    scale,
+  );
+
+  const arenaViewMinX = modelViewTransform.modelToViewX(-modelLevelWidth / 2);
+  const arenaViewMinY = modelViewTransform.modelToViewY(-modelLevelHeight / 2);
+  const arenaViewMaxX = modelViewTransform.modelToViewX(modelLevelWidth / 2);
+  const arenaViewMaxY = modelViewTransform.modelToViewY(modelLevelHeight / 2);
+
+  return {
+    modelViewTransform,
+    arenaBounds: new Bounds2(arenaViewMinX, arenaViewMinY, arenaViewMaxX, arenaViewMaxY),
+  };
+}
+
 export class MazeGameScreenView extends ScreenView {
   private readonly arenaNode: ArenaNode;
   private readonly controlPanel: ControlPanel;
   private readonly levelSelector: LevelSelector;
   private readonly hudNode: HudNode;
+  private readonly resetAllButton: ResetAllButton;
   private readonly keyboardListener: ReturnType<typeof KeyboardListener.createGlobal>;
   private readonly collisionSound: SoundClip;
   private readonly winSound: SoundClip;
@@ -95,72 +133,61 @@ export class MazeGameScreenView extends ScreenView {
     this.modeSound.play();
   };
 
+  private readonly applyLayout = (): void => {
+    const visibleBounds = this.visibleBoundsProperty.value;
+    const margin = MazeGameLayoutConstants.SCREEN_MARGIN;
+    const rightColumnGap = MazeGameLayoutConstants.RIGHT_COLUMN_GAP;
+
+    const { modelViewTransform, arenaBounds } = computeArenaLayout(visibleBounds);
+    this.arenaNode.setLayout(modelViewTransform, arenaBounds);
+
+    const columnRight = visibleBounds.maxX - margin;
+
+    this.controlPanel.right = columnRight;
+    this.controlPanel.top = visibleBounds.minY + margin;
+
+    this.levelSelector.right = columnRight;
+    this.levelSelector.top = this.controlPanel.bottom + rightColumnGap;
+
+    this.hudNode.right = columnRight;
+    this.hudNode.top = this.levelSelector.bottom + rightColumnGap;
+
+    this.resetAllButton.right = columnRight;
+    this.resetAllButton.bottom = visibleBounds.maxY - margin;
+  };
+
   public constructor(model: MazeGameModel, providedOptions: MazeGameScreenViewOptions) {
     const options = optionize<MazeGameScreenViewOptions, EmptySelfOptions, ScreenViewOptions>()({}, providedOptions);
     super(options);
 
-    const layoutBounds = this.layoutBounds;
-
-    const arenaLeft = MARGIN;
-    const arenaTop = MARGIN;
-    const arenaRight = layoutBounds.maxX - RIGHT_COLUMN_WIDTH - 2 * MARGIN;
-    const arenaBottom = layoutBounds.maxY - MARGIN;
-    const arenaWidth = arenaRight - arenaLeft;
-    const arenaHeight = arenaBottom - arenaTop;
-
-    const modelLevelWidth = MazeGameConstants.LEVEL_MODEL_WIDTH;
-    const modelLevelHeight = MazeGameConstants.LEVEL_MODEL_HEIGHT;
-    const scale = Math.min(arenaWidth / modelLevelWidth, arenaHeight / modelLevelHeight);
-
-    const arenaCenterX = arenaLeft + arenaWidth / 2;
-    const arenaCenterY = arenaTop + arenaHeight / 2;
-
-    const modelViewTransform = ModelViewTransform2.createSinglePointScaleMapping(
-      Vector2.ZERO,
-      new Vector2(arenaCenterX, arenaCenterY),
-      scale,
-    );
-
-    const arenaViewMinX = modelViewTransform.modelToViewX(-modelLevelWidth / 2);
-    const arenaViewMinY = modelViewTransform.modelToViewY(-modelLevelHeight / 2);
-    const arenaViewMaxX = modelViewTransform.modelToViewX(modelLevelWidth / 2);
-    const arenaViewMaxY = modelViewTransform.modelToViewY(modelLevelHeight / 2);
-    const arenaBounds = new Bounds2(arenaViewMinX, arenaViewMinY, arenaViewMaxX, arenaViewMaxY);
-
+    const { modelViewTransform, arenaBounds } = computeArenaLayout(this.visibleBoundsProperty.value);
     this.arenaNode = new ArenaNode(model, modelViewTransform, arenaBounds);
 
     this.controlPanel = new ControlPanel(model);
-    this.controlPanel.right = layoutBounds.maxX - MARGIN;
-    this.controlPanel.top = MARGIN;
-
     this.levelSelector = new LevelSelector(model, {
       tandem: options.tandem.createTandem("levelSelector"),
     });
-    this.levelSelector.right = layoutBounds.maxX - MARGIN;
-    this.levelSelector.top = this.controlPanel.bottom + RIGHT_COLUMN_GAP;
-
     this.hudNode = new HudNode(model, {
       interruptInput: () => this.interruptSubtreeInput(),
     });
-    this.hudNode.right = layoutBounds.maxX - MARGIN;
-    this.hudNode.top = this.levelSelector.bottom + RIGHT_COLUMN_GAP;
 
-    const resetAllButton = new ResetAllButton({
+    this.resetAllButton = new ResetAllButton({
       baseColor: MazeGameColors.resetAllButtonColorProperty,
       listener: () => {
         this.interruptSubtreeInput();
         model.reset();
       },
-      right: layoutBounds.maxX - MARGIN,
-      bottom: layoutBounds.maxY - MARGIN,
       accessibleName: StringManager.getInstance().getHudStrings().resetAllStringProperty,
       tandem: options.tandem.createTandem("resetAllButton"),
     });
 
-    this.children = [this.arenaNode, this.controlPanel, this.levelSelector, this.hudNode, resetAllButton];
+    this.children = [this.arenaNode, this.controlPanel, this.levelSelector, this.hudNode, this.resetAllButton];
 
     this.pdomPlayAreaNode.pdomOrder = [this.arenaNode];
-    this.pdomControlAreaNode.pdomOrder = [this.controlPanel, this.levelSelector, this.hudNode, resetAllButton];
+    this.pdomControlAreaNode.pdomOrder = [this.controlPanel, this.levelSelector, this.hudNode, this.resetAllButton];
+
+    this.visibleBoundsProperty.link(this.applyLayout, { disposer: this });
+    this.applyLayout();
 
     this.keyboardListener = KeyboardListener.createGlobal(this, {
       keys: [...KEYS],

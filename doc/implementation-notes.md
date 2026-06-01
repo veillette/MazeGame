@@ -24,7 +24,7 @@ Import order is critical: `main.ts` must import `./brand.js` first (`brand → s
 
 ## View / Layout
 
-- `MazeGameScreenView` scales the arena to fit left of a 240 px right column (`MARGIN`, `RIGHT_COLUMN_WIDTH`).
+- `MazeGameScreenView` relayouts on `visibleBoundsProperty` changes; arena scale uses left of a 240 px right column (`MazeGameLayoutConstants`).
 - Panel chrome constants live in `MazeGameConstants` (`PANEL_*`, `HUD_PANEL_Y_MARGIN`).
 
 ## Listeners and Disposal

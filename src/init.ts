@@ -19,4 +19,5 @@ init({
   splashDataURI: madeWithSceneryStackSplashDataURI,
   allowLocaleSwitching: true,
   colorProfiles: ["default", "projector"],
+  supportsSound: true,
 });

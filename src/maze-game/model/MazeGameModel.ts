@@ -91,6 +91,12 @@ export class MazeGameModel implements TModel {
     this.controlModePropertyImpl.unlink(this.resetKinematicsOnModeChange);
     this.isLastLevelProperty.dispose();
     this.levelProperty.dispose();
+    this.levelNamePropertyImpl.dispose();
+    this.controlModePropertyImpl.dispose();
+    this.timePropertyImpl.dispose();
+    this.collisionsPropertyImpl.dispose();
+    this.wonPropertyImpl.dispose();
+    this.particle.dispose();
   }
 
   public step(dt: number): void {
@@ -203,7 +209,8 @@ export class MazeGameModel implements TModel {
       );
 
     if (mode !== ControlMode.POSITION && colliding) {
-      assert && assert(particle.velocity.x === 0 && particle.velocity.y === 0, "velocity must be zero during wall contact");
+      assert &&
+        assert(particle.velocity.x === 0 && particle.velocity.y === 0, "velocity must be zero during wall contact");
       if (mode === ControlMode.ACCELERATION) {
         assert &&
           assert(
@@ -257,8 +264,7 @@ export class MazeGameModel implements TModel {
     this.wonPropertyImpl.reset();
     this.previousColliding = false;
     this.timeAccumulator = 0;
-    this.particle.setVelocityXY(0, 0);
-    this.particle.setAccelerationXY(0, 0);
+    this.particle.reset();
     this.placeParticleAtStart();
   }
 

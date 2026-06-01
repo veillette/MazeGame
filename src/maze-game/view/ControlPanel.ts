@@ -19,25 +19,13 @@ import { ArrowNode, PhetFont } from "scenerystack/scenery-phet";
 import { Panel, RectangularRadioButtonGroup } from "scenerystack/sun";
 import { StringManager } from "../../i18n/StringManager.js";
 import MazeGameColors from "../../MazeGameColors.js";
+import MazeGameLayoutConstants from "../MazeGameLayoutConstants.js";
 import { ControlMode } from "../model/ControlMode.js";
 import MazeGameConstants from "../model/MazeGameConstants.js";
 import type { MazeGameModel } from "../model/MazeGameModel.js";
 
 const AREA = MazeGameConstants.REMOTE_PAD_SIZE;
 const HALF = AREA / 2;
-
-const TITLE_FONT_SIZE = 16;
-const TAB_FONT_SIZE = 13;
-
-const ARROW_HEAD_WIDTH = 14;
-const ARROW_HEAD_HEIGHT = 14;
-const ARROW_TAIL_WIDTH = 5;
-
-const KNOB_RADIUS = 9;
-
-const TAB_SPACING = 4;
-const PAD_CORNER_RADIUS = 4;
-const VBOX_SPACING = 8;
 
 const COLOR_BY_MODE: Record<ControlMode, ProfileColorProperty> = {
   [ControlMode.POSITION]: MazeGameColors.positionVectorProperty,
@@ -66,8 +54,11 @@ export default class ControlPanel extends Panel {
 
     const controlModeBridgeProperty = new Property<ControlMode>(model.controlModeProperty.value);
 
-    const titleFont = new PhetFont({ size: TITLE_FONT_SIZE, weight: "bold" });
-    const tabFont = new PhetFont(TAB_FONT_SIZE);
+    const titleFont = new PhetFont({
+      size: MazeGameLayoutConstants.CONTROL_PANEL_TITLE_FONT_SIZE,
+      weight: "bold",
+    });
+    const tabFont = new PhetFont(MazeGameLayoutConstants.CONTROL_PANEL_TAB_FONT_SIZE);
 
     const header = new Text(strings.titleStringProperty, {
       font: titleFont,
@@ -105,19 +96,19 @@ export default class ControlPanel extends Panel {
           options: { accessibleName: strings.accelerationStringProperty },
         },
       ],
-      { orientation: "horizontal", spacing: TAB_SPACING },
+      { orientation: "horizontal", spacing: MazeGameLayoutConstants.CONTROL_PANEL_TAB_SPACING },
     );
     const padBackground = new Rectangle(-HALF, -HALF, AREA, AREA, {
       fill: MazeGameColors.padFillProperty,
-      cornerRadius: PAD_CORNER_RADIUS,
+      cornerRadius: MazeGameLayoutConstants.CONTROL_PANEL_PAD_CORNER_RADIUS,
     });
     const arrow = new ArrowNode(0, 0, 0, 0, {
-      headWidth: ARROW_HEAD_WIDTH,
-      headHeight: ARROW_HEAD_HEIGHT,
-      tailWidth: ARROW_TAIL_WIDTH,
+      headWidth: MazeGameLayoutConstants.PAD_ARROW_HEAD_WIDTH,
+      headHeight: MazeGameLayoutConstants.PAD_ARROW_HEAD_HEIGHT,
+      tailWidth: MazeGameLayoutConstants.PAD_ARROW_TAIL_WIDTH,
       stroke: null,
     });
-    const knob = new Circle(KNOB_RADIUS, {
+    const knob = new Circle(MazeGameLayoutConstants.CONTROL_PANEL_KNOB_RADIUS, {
       cursor: "pointer",
       stroke: MazeGameColors.knobStrokeProperty,
     });
@@ -129,7 +120,10 @@ export default class ControlPanel extends Panel {
     const pad = new Node({ children: [padBackground, padLayer] });
     pad.accessibleName = a11yStrings.controlPadStringProperty;
 
-    const content = new VBox({ spacing: VBOX_SPACING, children: [header, tabs, pad] });
+    const content = new VBox({
+      spacing: MazeGameLayoutConstants.CONTROL_PANEL_VBOX_SPACING,
+      children: [header, tabs, pad],
+    });
     super(content, {
       fill: MazeGameColors.panelFillProperty,
       stroke: MazeGameColors.panelStrokeProperty,
