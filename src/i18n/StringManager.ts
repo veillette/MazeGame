@@ -54,6 +54,15 @@ export type PreferencesStrings = {
   readonly particleTraceDescriptionStringProperty: ReadOnlyProperty<string>;
 };
 
+export type InfoStrings = {
+  readonly titleStringProperty: ReadOnlyProperty<string>;
+  readonly introductionStringProperty: ReadOnlyProperty<string>;
+  readonly practiceDescriptionStringProperty: ReadOnlyProperty<string>;
+  readonly level1DescriptionStringProperty: ReadOnlyProperty<string>;
+  readonly level2DescriptionStringProperty: ReadOnlyProperty<string>;
+  readonly certainDeathDescriptionStringProperty: ReadOnlyProperty<string>;
+};
+
 export type KeyboardHelpStrings = {
   readonly particleStringProperty: ReadOnlyProperty<string>;
   readonly controlParticleStringProperty: ReadOnlyProperty<string>;
@@ -106,6 +115,10 @@ export class StringManager {
 
   public getHudStrings(): HudStrings {
     return stringProperties.hud;
+  }
+
+  public getInfoStrings(): InfoStrings {
+    return stringProperties.info;
   }
 
   public getKeyboardHelpStrings(): KeyboardHelpStrings {

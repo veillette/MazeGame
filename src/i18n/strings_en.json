@@ -31,6 +31,14 @@
     "particleTrace": "Particle trace",
     "particleTraceDescription": "Show the path traveled by the particle."
   },
+  "info": {
+    "title": "Game Information",
+    "introduction": "Drive the red particle to the finish tile. Choose Position, Velocity, or Acceleration and use the control pad, drag the particle, or the arrow keys / WASD. Reach the goal with <b>zero wall collisions</b> to win.",
+    "practiceDescription": "<b>Practice:</b> Open arena with no walls. Learn the controls.",
+    "level1Description": "<b>Level 1:</b> A simple maze with a few walls.",
+    "level2Description": "<b>Level 2:</b> A winding maze bounded by outer walls.",
+    "certainDeathDescription": "<b>Certain Death:</b> A challenging maze. Good luck!"
+  },
   "keyboardHelp": {
     "particle": "Particle",
     "controlParticle": "Control particle",

@@ -31,6 +31,14 @@
     "particleTrace": "Trajectoire",
     "particleTraceDescription": "Afficher le chemin parcouru par la particule."
   },
+  "info": {
+    "title": "Informations sur le jeu",
+    "introduction": "Dirigez la particule rouge vers la case d'arrivée. Choisissez Position, Vitesse ou Accélération et utilisez le panneau de contrôle, faites glisser la particule ou les flèches / Z, Q, S, D. Atteignez le but avec <b>zéro collision</b> pour gagner.",
+    "practiceDescription": "<b>Entraînement :</b> Arène ouverte sans murs. Apprenez les contrôles.",
+    "level1Description": "<b>Niveau 1 :</b> Un labyrinthe simple avec quelques murs.",
+    "level2Description": "<b>Niveau 2 :</b> Un labyrinthe sinueux entouré de murs.",
+    "certainDeathDescription": "<b>Mort Certaine :</b> Un labyrinthe difficile. Bonne chance !"
+  },
   "keyboardHelp": {
     "particle": "Particule",
     "controlParticle": "Contrôler la particule",

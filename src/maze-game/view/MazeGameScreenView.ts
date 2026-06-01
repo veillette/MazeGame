@@ -6,6 +6,7 @@
  *   - The right column: control-mode panel, level selector, HUD (which now
  *     includes the Reset Level and Next Level buttons).
  *   - A ResetAllButton bottom-right.
+ *   - An InfoButton bottom-left in the right column.
  *
  * Keyboard input is wired through SceneryStack's KeyboardListener (global
  * scope) so it integrates with the focus / hotkey system instead of bypassing
@@ -23,7 +24,7 @@ import { Bounds2, Vector2 } from "scenerystack/dot";
 import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import { ModelViewTransform2 } from "scenerystack/phetcommon";
 import { KeyboardListener } from "scenerystack/scenery";
-import { ResetAllButton } from "scenerystack/scenery-phet";
+import { InfoButton, ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
 import { collect_mp3, SoundClip, selectionArpeggio001_mp3, soundManager, wallContact_mp3 } from "scenerystack/tambo";
 import type { Tandem } from "scenerystack/tandem";
@@ -37,6 +38,7 @@ import ArenaNode from "./ArenaNode.js";
 import ControlPanel from "./ControlPanel.js";
 import HudNode from "./HudNode.js";
 import LevelSelector from "./LevelSelector.js";
+import MazeGameInfoDialog from "./MazeGameInfoDialog.js";
 
 type MazeGameScreenViewOptions = ScreenViewOptions & { tandem: Tandem };
 
@@ -112,6 +114,8 @@ export class MazeGameScreenView extends ScreenView {
   private readonly levelSelector: LevelSelector;
   private readonly hudNode: HudNode;
   private readonly resetAllButton: ResetAllButton;
+  private readonly infoButton: InfoButton;
+  private readonly infoDialog: MazeGameInfoDialog;
   private readonly keyboardListener: ReturnType<typeof KeyboardListener.createGlobal>;
   private readonly collisionSound: SoundClip;
   private readonly winSound: SoundClip;
@@ -154,6 +158,9 @@ export class MazeGameScreenView extends ScreenView {
 
     this.resetAllButton.right = columnRight;
     this.resetAllButton.bottom = visibleBounds.maxY - margin;
+
+    this.infoButton.left = columnRight - MazeGameLayoutConstants.RIGHT_COLUMN_WIDTH;
+    this.infoButton.bottom = visibleBounds.maxY - margin;
   };
 
   public constructor(model: MazeGameModel, providedOptions: MazeGameScreenViewOptions) {
@@ -181,10 +188,33 @@ export class MazeGameScreenView extends ScreenView {
       tandem: options.tandem.createTandem("resetAllButton"),
     });
 
-    this.children = [this.arenaNode, this.controlPanel, this.levelSelector, this.hudNode, this.resetAllButton];
+    this.infoDialog = new MazeGameInfoDialog();
+    this.infoButton = new InfoButton({
+      listener: (): void => {
+        this.interruptSubtreeInput();
+        this.infoDialog.show();
+      },
+      scale: MazeGameLayoutConstants.INFO_BUTTON_SCALE,
+      tandem: options.tandem.createTandem("infoButton"),
+    });
+
+    this.children = [
+      this.arenaNode,
+      this.controlPanel,
+      this.levelSelector,
+      this.hudNode,
+      this.resetAllButton,
+      this.infoButton,
+    ];
 
     this.pdomPlayAreaNode.pdomOrder = [this.arenaNode];
-    this.pdomControlAreaNode.pdomOrder = [this.controlPanel, this.levelSelector, this.hudNode, this.resetAllButton];
+    this.pdomControlAreaNode.pdomOrder = [
+      this.controlPanel,
+      this.levelSelector,
+      this.hudNode,
+      this.infoButton,
+      this.resetAllButton,
+    ];
 
     this.visibleBoundsProperty.link(this.applyLayout, { disposer: this });
     this.applyLayout();
@@ -267,6 +297,7 @@ export class MazeGameScreenView extends ScreenView {
     this.levelSelector.dispose();
     this.controlPanel.dispose();
     this.arenaNode.dispose();
+    this.infoDialog.dispose();
 
     super.dispose();
   }
