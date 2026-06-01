@@ -8,6 +8,7 @@
  * area spans x ∈ [-16, 16], y ∈ [-7, 7] (TILE_SIZE = 1).
  */
 
+import { assert, assertSlow } from "scenerystack/assert";
 import { Bounds2 } from "scenerystack/dot";
 import MazeGameConstants from "./MazeGameConstants.js";
 import { TileType } from "./TileType.js";
@@ -95,6 +96,7 @@ export default class Level {
    * AABB-vs-circle overlap on the up-to-9 neighbour tiles.
    */
   public collidesWithTileTypeAt(type: TileType, x: number, y: number, radius: number): boolean {
+    assert && assert(radius >= 0 && Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(radius));
     const cCenter = this.xToCol(x);
     const rCenter = this.yToRow(y);
     if (this.inBounds(cCenter, rCenter) && this.data[rCenter]?.[cCenter] === type) {
@@ -148,6 +150,11 @@ export default class Level {
     radius: number,
     iterations = 8,
   ): { x: number; y: number } {
+    assert &&
+      assert(
+        !this.collidesWithTileTypeAt(type, safeX, safeY, radius),
+        "findLastNonCollidingPoint requires a non-colliding safe point",
+      );
     let sx = safeX;
     let sy = safeY;
     let tx = testX;
@@ -163,6 +170,11 @@ export default class Level {
         sy = midY;
       }
     }
+    assertSlow &&
+      assertSlow(
+        !this.collidesWithTileTypeAt(type, sx, sy, radius),
+        "findLastNonCollidingPoint must return a non-colliding point",
+      );
     return { x: sx, y: sy };
   }
 
@@ -191,6 +203,7 @@ export default class Level {
 
   /** Center-of-tile position (model coords) for the given grid cell. */
   public tileCenter(col: number, row: number): { x: number; y: number } {
+    assert && assert(this.inBounds(col, row), `tileCenter out of bounds: col=${col} row=${row}`);
     return {
       x: this.colToX(col) + TILE_SIZE / 2,
       y: this.rowToY(row) + TILE_SIZE / 2,

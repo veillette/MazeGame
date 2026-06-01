@@ -3,4 +3,9 @@ declare global {
   var self: typeof globalThis;
 }
 
+import { enableAssert, enableAssertSlow } from "scenerystack/assert";
+
 globalThis.self = globalThis;
+
+enableAssert();
+enableAssertSlow();

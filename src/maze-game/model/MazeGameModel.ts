@@ -6,6 +6,7 @@
  * The Sim framework calls step(dt) every animation frame.
  */
 
+import { assert } from "scenerystack/assert";
 import { BooleanProperty, DerivedProperty, NumberProperty, Property, type ReadOnlyProperty } from "scenerystack/axon";
 import type { TModel } from "scenerystack/joist";
 import { ControlMode } from "./ControlMode.js";
@@ -105,6 +106,7 @@ export class MazeGameModel implements TModel {
   }
 
   private stepInternal(dt: number): void {
+    assert && assert(dt > 0, "stepInternal dt must be positive");
     const particle = this.particle;
     const mode = this.controlModePropertyImpl.value;
     const level = this.levelProperty.value;
@@ -186,6 +188,33 @@ export class MazeGameModel implements TModel {
     if (this.hasStartedMoving()) {
       this.timePropertyImpl.value += dt;
     }
+
+    this.assertStepInvariants(mode, colliding);
+  }
+
+  /** Dev-time checks for simulation invariants (see vitest.setup / assert.ts). */
+  private assertStepInvariants(mode: ControlMode, colliding: boolean): void {
+    const particle = this.particle;
+
+    assert &&
+      assert(
+        particle.collidingProperty.value === colliding,
+        "particle collidingProperty must match wall collision state",
+      );
+
+    if (mode !== ControlMode.POSITION && colliding) {
+      assert && assert(particle.velocity.x === 0 && particle.velocity.y === 0, "velocity must be zero during wall contact");
+      if (mode === ControlMode.ACCELERATION) {
+        assert &&
+          assert(
+            particle.acceleration.x === 0 && particle.acceleration.y === 0,
+            "acceleration must be zero during wall contact",
+          );
+      }
+    }
+
+    assert &&
+      assert(!this.wonPropertyImpl.value || this.collisionsPropertyImpl.value === 0, "win requires zero collisions");
   }
 
   public changeLevel(name: LevelKey): void {
@@ -234,10 +263,16 @@ export class MazeGameModel implements TModel {
   }
 
   private placeParticleAtStart(): void {
-    const start = this.levelProperty.value.startPosition();
-    const center = this.levelProperty.value.tileCenter(start.col, start.row);
+    const level = this.levelProperty.value;
+    const start = level.startPosition();
+    const center = level.tileCenter(start.col, start.row);
     this.particle.setPositionXY(center.x, center.y);
     this.particle.setColliding(false);
+    assert &&
+      assert(
+        !level.collidesWithTileTypeAt(TileType.WALL, center.x, center.y, this.particle.radius),
+        "start position must not overlap a wall",
+      );
   }
 
   /**

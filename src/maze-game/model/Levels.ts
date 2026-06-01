@@ -7,6 +7,7 @@
  *   ' ' floor    'W' wall    'S' start    'F' finish
  */
 
+import { assertSlow } from "scenerystack/assert";
 import Level from "./Level.js";
 import { TileType } from "./TileType.js";
 
@@ -109,3 +110,33 @@ export const LEVELS: Record<LevelKey, Level> = {
   [LevelKey.LEVEL_2]: Level.fromStringArray(LEVEL_2, charToTile),
   [LevelKey.CERTAIN_DEATH]: Level.fromStringArray(CERTAIN_DEATH, charToTile),
 };
+
+const countTiles = (level: Level, type: TileType): number => {
+  let count = 0;
+  for (const row of level.data) {
+    for (const cell of row) {
+      if (cell === type) {
+        count++;
+      }
+    }
+  }
+  return count;
+};
+
+const assertBuiltInLevelInvariants = (level: Level, name: string): void => {
+  assertSlow &&
+    assertSlow(
+      countTiles(level, TileType.START) === 1 && countTiles(level, TileType.FINISH) === 1,
+      `${name}: level must have exactly one START and one FINISH`,
+    );
+};
+
+for (const key of LEVEL_KEYS) {
+  assertBuiltInLevelInvariants(LEVELS[key], key);
+}
+
+assertSlow &&
+  assertSlow(
+    LEVEL_KEYS.length === Object.keys(LEVELS).length && LEVEL_KEYS.every((key) => key in LEVELS),
+    "LEVEL_KEYS must match LEVELS keys",
+  );

@@ -10,9 +10,14 @@
  * available.
  */
 
+import { assert } from "scenerystack/assert";
 import { BooleanProperty, type ReadOnlyProperty } from "scenerystack/axon";
 import { Vector2, Vector2Property } from "scenerystack/dot";
 import MazeGameConstants from "./MazeGameConstants.js";
+
+const assertFiniteXY = (x: number, y: number, label: string): void => {
+  assert && assert(Number.isFinite(x) && Number.isFinite(y), `${label} must be finite`);
+};
 
 export default class Particle {
   private readonly positionPropertyImpl = new Vector2Property(new Vector2(0, 0));
@@ -51,14 +56,17 @@ export default class Particle {
   }
 
   public setPositionXY(x: number, y: number): void {
+    assertFiniteXY(x, y, "position");
     this.positionPropertyImpl.value = new Vector2(x, y);
   }
 
   public setVelocityXY(x: number, y: number): void {
+    assertFiniteXY(x, y, "velocity");
     this.velocityPropertyImpl.value = new Vector2(x, y);
   }
 
   public setAccelerationXY(x: number, y: number): void {
+    assertFiniteXY(x, y, "acceleration");
     this.accelerationPropertyImpl.value = new Vector2(x, y);
   }
 
